@@ -24,12 +24,7 @@ Every finding traces back to a source. Every source is saved. If something looks
 
    Sign up at [perplexity.ai](https://perplexity.ai), go to API settings, generate a key.
 
-   Set it as an environment variable:
-   ```bash
-   export PERPLEXITY_API_KEY="pplx-your-key-here"
-   ```
-
-   Or create `.env` in the plugin root:
+   Create `~/.claude/research-engine.env`:
    ```
    PERPLEXITY_API_KEY=pplx-your-key-here
    ```

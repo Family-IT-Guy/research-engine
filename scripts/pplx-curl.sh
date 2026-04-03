@@ -68,20 +68,15 @@ if [[ "${1:-}" == "--fetch-pdf" ]]; then
   exit 0
 fi
 
-# --- API key resolution ---
-# Priority: environment variable > .env in plugin root > ~/.claude/secrets/
+# --- API key ---
 PPLX_KEY=""
-if [[ -n "${PERPLEXITY_API_KEY:-}" ]]; then
-  PPLX_KEY="$PERPLEXITY_API_KEY"
-elif [[ -f "$SCRIPT_DIR/.env" ]]; then
-  PPLX_KEY=$(grep '^PERPLEXITY_API_KEY' "$SCRIPT_DIR/.env" | sed 's/^PERPLEXITY_API_KEY=//' | tr -d '"' | tr -d "'")
-elif [[ -f "$HOME/.claude/secrets/perplexity-api-key.env" ]]; then
-  PPLX_KEY=$(grep '^PERPLEXITY_API_KEY' "$HOME/.claude/secrets/perplexity-api-key.env" | sed 's/^PERPLEXITY_API_KEY=//' | tr -d '"' | tr -d "'")
+if [[ -f "$HOME/.claude/research-engine.env" ]]; then
+  PPLX_KEY=$(grep '^PERPLEXITY_API_KEY' "$HOME/.claude/research-engine.env" | sed 's/^PERPLEXITY_API_KEY=//' | tr -d '"' | tr -d "'")
 fi
 
 if [[ -z "$PPLX_KEY" ]]; then
   echo "ERROR: No Perplexity API key found." >&2
-  echo "Set PERPLEXITY_API_KEY environment variable, create .env in plugin root, or add to ~/.claude/secrets/perplexity-api-key.env" >&2
+  echo "Create ~/.claude/research-engine.env with: PERPLEXITY_API_KEY=pplx-your-key-here" >&2
   exit 1
 fi
 

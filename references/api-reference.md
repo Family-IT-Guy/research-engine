@@ -73,9 +73,7 @@ pplx-curl.sh --get "https://api.perplexity.ai/async/chat/completions/TASK_ID"
 -H "Authorization: Bearer $PERPLEXITY_API_KEY"
 ```
 
-API key resolution (handled by pplx-curl.sh):
-1. `PERPLEXITY_API_KEY` environment variable
-2. `.env` file in plugin root
+API key location: `~/.claude/research-engine.env` (handled by pplx-curl.sh)
 
 ## Request Format
 
