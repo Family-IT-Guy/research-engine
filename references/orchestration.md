@@ -73,17 +73,17 @@ The next sub-agent inherits the full chain and adds itself.
 
 Format: `RE-YYYY-MMDD-NNN` — sequential per calendar day.
 
-Generate all IDs BEFORE dispatching sub-agents to avoid race conditions:
+Generate all IDs BEFORE dispatching sub-agents to avoid race conditions.
+
+Use pplx-curl.sh:
 
 ```bash
-TODAY_ID=$(date +%Y-%m%d)
-TODAY_FILE=$(date +%Y-%m-%d)
-EXISTING=$(ls ./research/*-${TODAY_FILE}.md 2>/dev/null | wc -l | tr -d ' ')
-NEXT=$(printf "%03d" $((EXISTING + 1)))
-RESEARCH_ID="RE-${TODAY_ID}-${NEXT}"
+pplx-curl.sh --next-id [research_dir] [count]
 ```
 
-If the output directory is overridden via extension settings, adjust the glob path accordingly.
+Examples:
+- `pplx-curl.sh --next-id` — one ID, default `./research/` directory
+- `pplx-curl.sh --next-id ./research 3` — three sequential IDs
 
 ## Sub-Agent Dispatch Templates
 

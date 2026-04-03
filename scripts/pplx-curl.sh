@@ -9,6 +9,7 @@
 #   GET:       pplx-curl.sh --get <url> [output_file]
 #   RESEARCH:  pplx-curl.sh --research <topic_slug> <json_payload> [research_dir]
 #   FETCH-PDF: pplx-curl.sh --fetch-pdf <url> [output_dir]
+#   NEXT-ID:   pplx-curl.sh --next-id [research_dir] [count]
 #
 # RESEARCH mode handles directory creation, timestamp generation, and filename
 # construction internally. This allows sub-agents to make a SINGLE Bash call
@@ -24,6 +25,20 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# --next-id generates the next sequential research ID for today
+if [[ "${1:-}" == "--next-id" ]]; then
+  RESEARCH_DIR="${2:-./research}"
+  COUNT="${3:-1}"
+  TODAY_ID=$(date +%Y-%m%d)
+  TODAY_FILE=$(date +%Y-%m-%d)
+  EXISTING=$(ls "$RESEARCH_DIR"/*-${TODAY_FILE}.md 2>/dev/null | wc -l | tr -d ' ')
+  for ((i=1; i<=COUNT; i++)); do
+    NEXT=$(printf "%03d" $((EXISTING + i)))
+    echo "RE-${TODAY_ID}-${NEXT}"
+  done
+  exit 0
+fi
 
 # --fetch-pdf doesn't need the API key, handle it before key extraction
 if [[ "${1:-}" == "--fetch-pdf" ]]; then

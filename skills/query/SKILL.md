@@ -48,15 +48,13 @@ parameters, incorporate changes.
 
 ### Step 3: Generate Research ID
 
+Use pplx-curl.sh:
+
 ```bash
-TODAY_ID=$(date +%Y-%m%d)
-TODAY_FILE=$(date +%Y-%m-%d)
-EXISTING=$(ls ./research/*-${TODAY_FILE}.md 2>/dev/null | wc -l | tr -d ' ')
-NEXT=$(printf "%03d" $((EXISTING + 1)))
-RESEARCH_ID="RE-${TODAY_ID}-${NEXT}"
+pplx-curl.sh --next-id
 ```
 
-Adjust the glob path if `output_directory` is overridden in the extension file.
+This returns the next sequential ID (e.g., `RE-2026-0403-001`).
 
 ### Step 4: Execute API Call
 
