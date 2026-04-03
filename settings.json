@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(/research/**)",
+      "Bash(*pplx-curl.sh*)",
+      "Bash(*yt-dlp*)"
+    ]
+  }
+}
