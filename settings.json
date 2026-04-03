@@ -2,6 +2,7 @@
   "permissions": {
     "allow": [
       "Edit(/research/**)",
+      "Write(/research/**)",
       "Bash(*pplx-curl.sh*)",
       "Bash(*yt-dlp*)"
     ]
