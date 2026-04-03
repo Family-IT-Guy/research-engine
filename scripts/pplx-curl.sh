@@ -10,6 +10,7 @@
 #   RESEARCH:  pplx-curl.sh --research <topic_slug> <json_payload> [research_dir]
 #   FETCH-PDF: pplx-curl.sh --fetch-pdf <url> [output_dir]
 #   NEXT-ID:   pplx-curl.sh --next-id [research_dir] [count]
+#   WRITE:     pplx-curl.sh --write <filepath>  (reads content from stdin)
 #
 # RESEARCH mode handles directory creation, timestamp generation, and filename
 # construction internally. This allows sub-agents to make a SINGLE Bash call
@@ -25,6 +26,16 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# --write writes content from stdin to a file (for background sub-agents
+# that can't use the Write tool directly)
+if [[ "${1:-}" == "--write" ]]; then
+  OUTPUT_FILE="$2"
+  mkdir -p "$(dirname "$OUTPUT_FILE")"
+  cat > "$OUTPUT_FILE"
+  echo "Written: $OUTPUT_FILE ($(wc -c < "$OUTPUT_FILE" | tr -d ' ') bytes)"
+  exit 0
+fi
 
 # --next-id generates the next sequential research ID for today
 if [[ "${1:-}" == "--next-id" ]]; then

@@ -50,25 +50,26 @@ This skill runs inside background sub-agents using the `research-executor`
 agent definition, which declares tools: Read, Write, Bash, Glob, Grep,
 WebFetch, WebSearch.
 
-**Write permissions** come from the settings.json allow list, NOT from the
-agent definition's `permissionMode` (which does not propagate to background
-agents). The rule `Edit(/research/**)` in `~/.claude/settings.json`
-auto-approves Write operations to `<project-root>/research/`.
+**Bash permissions** come from settings.json. The rule
+`Bash(*pplx-curl.sh*)` auto-approves all pplx-curl.sh commands. This is the
+ONLY permission background sub-agents need — all file operations go through
+pplx-curl.sh.
 
-**Bash permissions** are also via settings.json. The rule
-`Bash(*pplx-curl.sh*)` auto-approves only commands containing "pplx-curl.sh".
-
-See `references/permissions.md` for the full permission architecture.
+**Background agents cannot use the Write or Edit tools** regardless of
+settings.json allow rules. This is a Claude Code platform limitation
+(tested 2026-04-03, v2.1.91). All file writes MUST go through
+`pplx-curl.sh --write`.
 
 **Rules:**
-- The ONLY Bash call in this workflow is `pplx-curl.sh` (find it in the
-  research-engine plugin's `scripts/` directory)
+- All Bash calls use `pplx-curl.sh` (find it in the research-engine
+  plugin's `scripts/` directory)
 - All file reads: use the **Read** tool
-- All file writes: use the **Write** tool
+- All file writes: use `pplx-curl.sh --write <filepath>` with content
+  piped via heredoc. Do NOT use the Write tool (denied for background agents).
 - All file searches: use **Glob** and **Grep** tools
 - All web fetching: use **WebFetch** tool
-- Directory creation and timestamp generation are handled INSIDE pplx-curl.sh
-- Do NOT run mkdir, date, variable assignments, or any other Bash commands
+- Do NOT run mkdir, date, variable assignments, or any other standalone
+  Bash commands
 
 ## Input Parameters
 
@@ -218,8 +219,14 @@ Extract from the response:
 
 ### Step 4: Write Thread File
 
-Use the **Write** tool to create `research/[topic-slug]-YYYY-MM-DD.md`
-with YAML frontmatter.
+Use `pplx-curl.sh --write` to create `research/[topic-slug]-YYYY-MM-DD.md`
+with YAML frontmatter. Pipe content via heredoc:
+
+```bash
+pplx-curl.sh --write "research/[topic-slug]-YYYY-MM-DD.md" <<'THREAD_EOF'
+[full thread file content here]
+THREAD_EOF
+```
 
 **YAML Frontmatter**:
 
@@ -319,7 +326,7 @@ full content. Choose the fetch method based on URL type:
    If `~/.claude/research-engine.md` defines a `youtube_tool` in Settings,
    use that command instead.
 2. Extract title, channel, transcript text, and view count from the output
-3. Use the **Write** tool to save to
+3. Use `pplx-curl.sh --write` to save to
    `research/sources/[timestamp]_youtube_[video-id].md`
    with a header noting the video title, channel, and view count
 4. Treat the transcript as a primary source (same as fetched articles)
@@ -327,7 +334,7 @@ full content. Choose the fetch method based on URL type:
 **For HTML URLs** (everything else):
 1. Fetch the article using **WebFetch** with a prompt asking for the full
    content relevant to the research question
-2. Use the **Write** tool to save to
+2. Use `pplx-curl.sh --write` to save to
    `research/sources/[timestamp]_[domain]_[slug].md`
 
 For each source (PDF, YouTube, or HTML), note findings:
@@ -354,8 +361,9 @@ Followed" section.
 
 ### Step 7: Assess Completeness
 
-If critical gaps remain after primary source reading, use the **Write** tool
-to create a cascade request file at `research/cascades/`.
+If critical gaps remain after primary source reading, use
+`pplx-curl.sh --write` to create a cascade request file at
+`research/cascades/`.
 
 **Cascade Request Format** (`research/cascades/[research_id]-cascade.yml`):
 

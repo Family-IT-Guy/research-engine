@@ -38,7 +38,6 @@ Every finding traces back to a source. Every source is saved. If something looks
      "permissions": {
        "allow": [
          "Edit(/research/**)",
-         "Write(/research/**)",
          "Bash(*pplx-curl.sh*)",
          "Bash(*yt-dlp*)"
        ]
