@@ -106,8 +106,9 @@ research/
 
 ## API Key
 
-Handled internally by `pplx-curl.sh`. Do NOT extract the key manually, use
-the Read tool on the key file, or run any Bash command to read it.
+Stored at `~/.claude/research-engine.env`. Handled internally by
+`pplx-curl.sh`. Do NOT extract the key manually, use the Read tool on the
+key file, or run any Bash command to read it.
 
 ## Model Selection
 
