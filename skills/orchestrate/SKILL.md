@@ -114,36 +114,50 @@ full research coverage. Nothing to dispatch." Then stop.
 
 ### Step 4: Present Research Plan to User
 
-Present a scannable summary of all topics, with detail available on demand.
+Present a conversational summary of all topics. Keep it natural — the user is
+talking to a research partner, not reading a terminal. Detail is available on
+request for power users.
 
 **Summary view** (always show this first):
 
+Write a natural introduction: "I found N topics worth researching from your
+[source description]:" Then for each topic:
+
+- State the topic name in plain language
+- Describe coverage status conversationally:
+  - `none` → "nothing in your files yet"
+  - `partial` → "we have some research on this but it's incomplete"
+  - `stale` → "we have research but it's [N] days old"
+  - `full (upgrade candidate)` → "we did a quick search before, but this deserves a deeper look"
+- State the recommended search approach:
+  - `quick` → "a quick search should be enough" or "a quick update should cover it"
+  - `deep` → "I'd recommend a thorough search on this one" or "this one deserves a deep look"
+
+End with natural options, not format specifications:
+
 ```
-RESEARCH PLAN (N topics from [source_type]: "[source_ref]"):
+Want me to go ahead with these? You can also:
+- Change any topic to a quick or thorough search
+- Skip a topic you don't need
+- Ask me to explain what I'd look for on any topic
 
-1. [Topic name] — [none / partial / stale (N days)]
-   → [recommended depth]: "[research query]"
-
-2. [Topic name] — [none / partial / stale (N days)]
-   → [recommended depth]: "[research query]"
-
-3. [Topic name] — quick scan (RE-YYYY-MMDD-NNN, YYYY-MM-DD) → upgrade to deep
-   → [recommended depth]: "[research query]"
-
-Detail [1/2/3/all]? Or approve with depths:
-e.g., "1: quick, 2: skip, 3: deep" or "quick on all"
+For example: "go ahead", "skip 2", "make 1 a quick search", or "tell me more about 1"
 ```
 
-For upgrade candidates, append `→ upgrade to deep` on the coverage line.
+Do not show research IDs, query strings, source_type, source_ref, or variable
+names in the summary. These are internal.
 
-**Expanded view** (show when user says "detail N" or "detail all"):
+**Detail view** (show when user says "tell me more about N", "details", "what
+exactly would you search for?", or similar):
+
+For power users who want to see or adjust the technical parameters:
 
 ```
 N. [Topic name]
    Objective: [What this research will answer]
    Query: "[the specific research query]"
-   Methodology: [sonar-reasoning-pro / sonar-deep-research] because [rationale]
-   Search mode: [web/academic/sec] because [rationale]
+   Model: [sonar-reasoning-pro / sonar-deep-research] — [rationale]
+   Search mode: [web/academic/sec] — [rationale]
 
    Parameters:
    - return_images: [true/false]
@@ -155,25 +169,22 @@ N. [Topic name]
 
    Blind spots:
    - [What this approach might miss]
-
-   → quick / deep / skip?
 ```
 
-For upgrade candidates in expanded view, add:
+For upgrade candidates in detail view, also show:
 ```
-   Prior research: quick scan (RE-YYYY-MMDD-NNN, YYYY-MM-DD)
-   → deep (upgrade) / deep (fresh) / skip?
+   Prior research: [research_id, date]
+   Options: build on the previous search, start fresh, or skip
 ```
-
-"deep (upgrade)" passes the quick scan's findings as context.
-"deep (fresh)" dispatches a standard deep dive ignoring prior work.
 
 **Handling user responses:**
 
-Accept formats like "1: deep, 2: quick, 3: skip", "quick on all", or one at
-a time. Users may also edit queries, parameters, or scope before approving.
-If the user approves without requesting detail, proceed with the recommended
-depths shown in the summary view.
+Accept natural language: "go ahead", "looks good", "skip the second one",
+"make them all quick", "do a thorough search on 1", etc. Also accept
+structured formats like "1: deep, 2: quick" for power users.
+
+If the user approves without specifying depths, use the recommendations from
+the summary view.
 
 ### Step 5: Generate Research IDs and Dispatch Sub-Agents
 
@@ -214,30 +225,30 @@ background."
 
 ### Step 5.5: Report Completion Stats
 
-When all dispatched sub-agents have completed (or failed), present aggregate
-stats to the user:
+When all dispatched sub-agents have completed (or failed), present results
+conversationally. Lead with what was found, not system metrics.
 
-```
-RESEARCH COMPLETE:
-  Agents: N succeeded, M failed
-  Total cost: $X.XX
-  Total sources: N
-  Thread files: [list of paths]
-  Cascades requested: N
-```
+For each completed topic:
+- State the topic name
+- Summarize what was found (1-2 sentences of the key finding)
+- Note source count: "found N sources"
 
-**If any agent used WebSearch fallback**, add a prominent warning:
+If any searches failed, explain in plain language: "The search on [topic]
+didn't work — [reason]. Want me to try again?"
 
-```
-FALLBACK USED:
-  RE-YYYY-MMDD-NNN: [topic] — [fallback_reason]
-  Perplexity attempts: N | Retry params: [what was changed]
-  → Want me to retry this topic with Perplexity? (suggest adjusted parameters)
-```
+If any agent used WebSearch fallback, explain: "I couldn't reach my usual
+research source for [topic], so I used a simpler search instead. The results
+may be less thorough. Want me to retry?"
 
-Sum `cost` and `source_count` from each sub-agent's structured return summary.
-For failed agents, note the failure reason. If any agents requested cascades,
-proceed to Step 6.
+If any agents requested cascades (follow-up questions), introduce them
+naturally: "While researching [topic], I found a follow-up question worth
+investigating: [cascade topic]. Want me to look into that too?"
+
+End with cost if non-trivial: "(Research cost: $X.XX)"
+
+Sum `cost` and `source_count` from each sub-agent's structured return summary
+internally. For failed agents, note the failure reason. If any agents
+requested cascades, proceed to Step 6.
 
 **Extension point: Post-Research Hooks.** If `~/.claude/research-engine.md`
 defines Post-Research Hooks, execute them now (after stats, before cascades).
@@ -259,22 +270,19 @@ If a cascade file exists:
    - If content is retrieved, save to `research/sources/` and append
      the key findings to the cascade's `context_for_next_agent` fields
    - If all methods fail, note it when presenting follow-ups
-3. Present follow-up topics using the same compact format as Step 4:
+3. Present follow-up topics conversationally:
 
-**Summary view:**
+Introduce the cascade naturally: "While researching [parent topic], I found
+[N] follow-up question(s) worth investigating:" Then for each follow-up:
 
-```
-CASCADE from [parent_topic] ([parent_research_id]):
-[parent_summary — 2-3 sentences]
+- State what the gap is in plain language
+- Explain why it matters (how it connects to the parent topic)
+- Recommend a search depth using the same natural language as Step 4
 
-Blocked sources: [N retrieved / M failed] (or omit if none)
+If blocked sources were retrieved, mention it briefly: "I also pulled in some
+sources that the initial search couldn't access."
 
-Follow-up topics:
-1. [Topic name] — from parent gap
-   → [recommended depth]: "[suggested query]"
-
-Detail [1/2/all]? Or approve with depths:
-```
+End with: "Want me to look into these?" Accept natural language responses.
 
 4. If approved, generate new research IDs and dispatch sub-agents using the
    cascade child dispatch template from `references/orchestration.md`
