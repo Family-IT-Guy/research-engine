@@ -112,40 +112,46 @@ Filter decisions:
 If no topics remain after filtering, report: "All extracted topics already have
 full research coverage. Nothing to dispatch." Then stop.
 
-### Step 4: Present Research Plan to User
+### Step 4: Present Research Plan and Proceed
 
-Present a conversational summary of all topics. Keep it natural — the user is
-talking to a research partner, not reading a terminal. Detail is available on
-request for power users.
+**Approval modes** (determined by the calling context or extension file):
 
-**Summary view** (always show this first):
+- **auto-proceed** (recommended for health/medical contexts): Inform the user
+  what you're researching and dispatch immediately. No approval gate. The user
+  can interrupt or redirect, but the default is forward motion.
+- **confirm** (default for general use): Present the plan, wait for the user
+  to approve before dispatching.
 
-Write a natural introduction: "I found N topics worth researching from your
-[source description]:" Then for each topic:
+If the calling context (e.g., a project CLAUDE.md) instructs auto-proceed,
+skip the approval wait — present the plan as informational and go directly
+to Step 5.
 
+**Presenting the plan** (both modes):
+
+Present a conversational summary. Keep it natural.
+
+For auto-proceed, frame as informational: "I'm looking into [topics] for you."
+For confirm mode, frame as a question: "I found [N] things worth researching.
+Want me to look into these?"
+
+For each topic:
 - State the topic name in plain language
-- Describe coverage status conversationally:
+- One sentence on why it matters or what gap it fills
+- Coverage status in natural language if relevant:
   - `none` → "nothing in your files yet"
-  - `partial` → "we have some research on this but it's incomplete"
+  - `partial` → "we have some research but it's incomplete"
   - `stale` → "we have research but it's [N] days old"
-  - `full (upgrade candidate)` → "we did a quick search before, but this deserves a deeper look"
-- State the recommended search approach:
-  - `quick` → "a quick search should be enough" or "a quick update should cover it"
-  - `deep` → "I'd recommend a thorough search on this one" or "this one deserves a deep look"
 
-End with natural options, not format specifications:
+Do not present depth choices to the user. The system picks the appropriate
+depth based on the topic's importance and coverage status. Do not show
+research IDs, query strings, source_type, source_ref, or variable names.
+These are internal.
 
-```
-Want me to go ahead with these? You can also:
-- Change any topic to a quick or thorough search
-- Skip a topic you don't need
-- Ask me to explain what I'd look for on any topic
+In confirm mode, end with: "Want me to look into these? You can skip any
+you don't need." Accept natural language responses.
 
-For example: "go ahead", "skip 2", "make 1 a quick search", or "tell me more about 1"
-```
-
-Do not show research IDs, query strings, source_type, source_ref, or variable
-names in the summary. These are internal.
+**Detail view** (show only when user asks — "what exactly will you search for?",
+"tell me more", "details"):
 
 **Detail view** (show when user says "tell me more about N", "details", "what
 exactly would you search for?", or similar):
@@ -177,14 +183,11 @@ For upgrade candidates in detail view, also show:
    Options: build on the previous search, start fresh, or skip
 ```
 
-**Handling user responses:**
+**Handling user responses (confirm mode only):**
 
 Accept natural language: "go ahead", "looks good", "skip the second one",
-"make them all quick", "do a thorough search on 1", etc. Also accept
-structured formats like "1: deep, 2: quick" for power users.
-
-If the user approves without specifying depths, use the recommendations from
-the summary view.
+etc. If the user approves without changes, proceed with the system's
+recommended depths.
 
 ### Step 5: Generate Research IDs and Dispatch Sub-Agents
 
