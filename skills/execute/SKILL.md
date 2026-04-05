@@ -192,6 +192,7 @@ The `--research` mode handles internally:
 - Creating `research/raw/`, `sources/`, `cascades/` directories
 - Generating a timestamp for the filename
 - Saving the API response to `research/raw/TIMESTAMP_TOPIC-SLUG.json`
+- Extracting the content to `research/raw/TIMESTAMP_TOPIC-SLUG.content.md`
 - Printing the output file path as `OUTPUT_PATH=<path>` (last line of output)
 
 Parse the last line of output to get the file path for Step 3.
@@ -207,15 +208,21 @@ single most common API mistake.
 
 ### Step 3: Read and Extract
 
-Use the **Read** tool to retrieve the saved JSON file. For large responses
-(>2000 lines), use offset/limit to read in chunks.
+Two files are saved per API call:
+- `.json` — full API response (metadata, usage, sources, content)
+- `.content.md` — just the response content as readable markdown
 
-Extract from the response:
-- Content: `.choices[0].message.content`
+**Read the `.content.md` file** for the research content. Use the Read tool.
+This is the primary source for analysis, wave pattern evaluation, and thread
+file writing.
+
+**Read the `.json` file** only when you need metadata:
 - Sources: `.search_results[]` (title, URL, date, snippet) — use this, not `citations`
 - Cost: `.usage.cost.total_cost`
 - Token count: `.usage.total_tokens`
 - Related questions: `.related_questions` (if present)
+
+For the JSON file, use the Read tool with offset/limit if it's large.
 
 ### Step 4: Write Thread File
 

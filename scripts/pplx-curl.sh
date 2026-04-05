@@ -138,7 +138,16 @@ if [[ "${1:-}" == "--research" ]]; then
     fi
   fi
 
+  # Extract content to readable markdown file
+  CONTENT_FILE="${OUTPUT_FILE%.json}.content.md"
+  if command -v jq &>/dev/null; then
+    jq -r '.choices[0].message.content // empty' "$OUTPUT_FILE" > "$CONTENT_FILE" 2>/dev/null
+  fi
+
   echo "Saved: $OUTPUT_FILE ($(wc -c < "$OUTPUT_FILE" | tr -d ' ') bytes)"
+  if [[ -s "$CONTENT_FILE" ]]; then
+    echo "Content: $CONTENT_FILE ($(wc -c < "$CONTENT_FILE" | tr -d ' ') bytes)"
+  fi
   echo "OUTPUT_PATH=$OUTPUT_FILE"
 
 elif [[ "${1:-}" == "--get" ]]; then
