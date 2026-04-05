@@ -43,7 +43,7 @@ if [[ "${1:-}" == "--next-id" ]]; then
   COUNT="${3:-1}"
   TODAY_ID=$(date +%Y-%m%d)
   TODAY_FILE=$(date +%Y-%m-%d)
-  EXISTING=$(ls "$RESEARCH_DIR"/*-${TODAY_FILE}.md 2>/dev/null | wc -l | tr -d ' ')
+  EXISTING=$(find "$RESEARCH_DIR" -maxdepth 1 -name "*-${TODAY_FILE}.md" 2>/dev/null | wc -l | tr -d ' ')
   for ((i=1; i<=COUNT; i++)); do
     NEXT=$(printf "%03d" $((EXISTING + i)))
     echo "RE-${TODAY_ID}-${NEXT}"
