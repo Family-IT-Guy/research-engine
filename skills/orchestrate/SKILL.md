@@ -223,8 +223,20 @@ all variables:
 5. Dispatch using the cascade child dispatch template from
    `references/orchestration.md`
 
-Report to user: "Dispatched N research sub-agents. They will run in the
-background."
+### Step 5.1: Monitor Progress
+
+After dispatching sub-agents, do not go silent. The user should never wonder
+whether something is still happening.
+
+**Every 60 seconds:** Read the last 30 lines of each running sub-agent's
+output file. Report progress in plain language:
+
+- What the agent is currently doing ("reading primary sources", "analyzing
+  the Perplexity response", "writing the research file")
+- How many sources it has found so far (if visible in the output)
+
+Keep updates to one or two sentences. Don't repeat the same status if nothing
+has changed — just say "still working on [topic]."
 
 ### Step 5.5: Report Completion Stats
 
