@@ -373,6 +373,24 @@ if [[ "${1:-}" == "--research" ]]; then
     jq -r '.choices[0].message.content // empty' "$OUTPUT_FILE" > "$CONTENT_FILE" 2>/dev/null
   fi
 
+  # Citation-count gate: reject training-data-only responses (0 live web citations)
+  if command -v jq &>/dev/null; then
+    CITE_COUNT=$(jq '.search_results | length' "$OUTPUT_FILE" 2>/dev/null || echo "0")
+    if [[ "$CITE_COUNT" == "null" ]]; then CITE_COUNT=0; fi
+    if [[ "$CITE_COUNT" -eq 0 ]]; then
+      echo "REJECTED: 0 live citations in search_results. Response is training-data only." >&2
+      echo "Raw JSON preserved at: $OUTPUT_FILE (for inspection)" >&2
+      echo "Content file removed: $CONTENT_FILE" >&2
+      rm -f "$CONTENT_FILE"
+      echo "CITATION_CHECK_FAILED=true"
+      echo "OUTPUT_PATH=$OUTPUT_FILE"
+      exit 1
+    elif [[ "$CITE_COUNT" -lt 5 ]]; then
+      echo "WARNING: Only $CITE_COUNT citations. Thin grounding — flag in thread file." >&2
+    fi
+    echo "Citations: $CITE_COUNT"
+  fi
+
   echo "Saved: $OUTPUT_FILE ($(wc -c < "$OUTPUT_FILE" | tr -d ' ') bytes)"
   if [[ -s "$CONTENT_FILE" ]]; then
     echo "Content: $CONTENT_FILE ($(wc -c < "$CONTENT_FILE" | tr -d ' ') bytes)"
