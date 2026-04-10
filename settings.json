@@ -3,7 +3,8 @@
     "allow": [
       "Edit(/research/**)",
       "Bash(*pplx-curl.sh*)",
-      "Bash(*yt-dlp*)"
+      "Bash(*yt-dlp*)",
+      "Bash(*playwright-cli*)"
     ]
   }
 }

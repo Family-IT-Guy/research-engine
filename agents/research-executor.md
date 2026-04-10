@@ -3,7 +3,7 @@ name: research-executor
 description: >-
   Execute Perplexity API research and write findings to thread files.
   INTERNAL — dispatched by research-engine:orchestrate, never invoked directly.
-tools: Read, Write, Bash, Glob, Grep, WebFetch, WebSearch
+tools: Read, Write, Bash, Glob, Grep, WebSearch
 permissionMode: acceptEdits
 model: inherit
 ---
