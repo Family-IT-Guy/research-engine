@@ -121,6 +121,14 @@ The extension file is optional. The base plugin works without it.
 
 See `references/models.md` for full pricing breakdown and selection guidance.
 
+## Prerequisites
+
+- **jq** — JSON processor, used for cache index operations. Install: `brew install jq` (macOS), `apt install jq` (Linux), `choco install jq` (Windows).
+- **playwright-cli** — browser automation for fetching JavaScript-rendered web pages during deep-dive research. Install:
+  - CLI: `brew install playwright-cli` (macOS) or `npm install -g @playwright/cli` (cross-platform)
+  - Browser: `playwright-cli install-browser firefox` (required for default browser)
+  - Skill: clone [microsoft/playwright-cli](https://github.com/microsoft/playwright-cli), copy `skills/playwright-cli/` to `~/.claude/skills/playwright-cli/`
+
 ## Requirements
 
 - Claude Code (CLI or Desktop)

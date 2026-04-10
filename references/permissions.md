@@ -54,6 +54,32 @@ Only Bash allow rules propagate to background agents. The research engine
 works around this by routing all background file writes through
 `pplx-curl.sh --write`, which is auto-approved via the Bash rule.
 
+## Background Agent WebFetch Limitation
+
+**Background agents cannot use the WebFetch tool** regardless of the
+`tools:` declaration in the agent frontmatter. Same root cause as the
+Write/Edit limitation: only Bash allow rules propagate to background
+sub-agents in Claude Code.
+
+Workaround: route HTML fetching through `pplx-curl.sh --fetch-html`
+(which uses `playwright-cli` internally). The Bash allow rule
+`Bash(*pplx-curl.sh*)` covers this.
+
+### Prerequisite: playwright-cli
+
+The `--fetch-html` mode requires `playwright-cli` (CLI tool + Claude Code
+skill from microsoft/playwright-cli).
+
+Installation:
+- CLI: `brew install playwright-cli` (macOS) or `npm install -g @playwright/cli`
+- Browser: `playwright-cli install-browser firefox`
+- Skill: clone microsoft/playwright-cli, copy `skills/playwright-cli/` to `~/.claude/skills/playwright-cli/`
+
+Required Bash allow rule in the parent project's settings.json:
+```
+"Bash(*playwright-cli*)"
+```
+
 ## Permission Evaluation Order
 
 deny → ask → allow → permission mode

@@ -2,3 +2,4 @@
 .DS_Store
 research/
 .firecrawl/
+.playwright-cli/
