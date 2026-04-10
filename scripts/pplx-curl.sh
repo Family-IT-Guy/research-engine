@@ -224,6 +224,7 @@ if [[ "${1:-}" == "--fetch-html" ]]; then
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --browser=*) BROWSER="${1#--browser=}" ;;
+      --browser) shift; BROWSER="${1:-default}" ;;
       *) OUTPUT_DIR="$1" ;;
     esac
     shift
@@ -267,13 +268,14 @@ if [[ "${1:-}" == "--fetch-html" ]]; then
   }
   trap cleanup_playwright EXIT
 
-  # Open browser (exit codes are ALWAYS 0, check output for errors)
+  # Open browser (check exit code AND output for errors)
   set +e
   OPEN_OUTPUT=$(playwright-cli open --browser="$BROWSER" "$URL" 2>&1)
+  OPEN_EXIT=$?
   set -e
 
-  if echo "$OPEN_OUTPUT" | grep -q '### Error'; then
-    echo "ERROR: playwright-cli open failed:" >&2
+  if [[ $OPEN_EXIT -ne 0 ]] || echo "$OPEN_OUTPUT" | grep -qE '### Error|not installed|Error:'; then
+    echo "ERROR: playwright-cli open failed (exit $OPEN_EXIT):" >&2
     echo "$OPEN_OUTPUT" >&2
     exit 1
   fi
