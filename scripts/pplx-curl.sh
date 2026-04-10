@@ -5,12 +5,13 @@
 # This avoids fragile Bash permission patterns with nested $() expressions.
 #
 # Usage:
-#   POST:      pplx-curl.sh <url> <output_file> <json_payload>
-#   GET:       pplx-curl.sh --get <url> [output_file]
-#   RESEARCH:  pplx-curl.sh --research <topic_slug> <json_payload> [research_dir]
-#   FETCH-PDF: pplx-curl.sh --fetch-pdf <url> [output_dir]
-#   NEXT-ID:   pplx-curl.sh --next-id [research_dir] [count]
-#   WRITE:     pplx-curl.sh --write <filepath>  (reads content from stdin)
+#   POST:       pplx-curl.sh <url> <output_file> <json_payload>
+#   GET:        pplx-curl.sh --get <url> [output_file]
+#   RESEARCH:   pplx-curl.sh --research <topic_slug> <json_payload> [research_dir]
+#   FETCH-PDF:  pplx-curl.sh --fetch-pdf <url> [output_dir]
+#   FETCH-HTML: pplx-curl.sh --fetch-html <url> [output_dir] [--browser=firefox]
+#   NEXT-ID:    pplx-curl.sh --next-id [research_dir] [count]
+#   WRITE:      pplx-curl.sh --write <filepath>  (reads content from stdin)
 #
 # RESEARCH mode handles directory creation, timestamp generation, and filename
 # construction internally. This allows sub-agents to make a SINGLE Bash call
@@ -21,11 +22,126 @@
 # parse it. No API key needed. Validates the download is actually a PDF.
 # Output: LOCAL_PATH=<path> (last line) or exits non-zero with error details.
 #
+# FETCH-HTML mode fetches a web page via playwright-cli (headless browser),
+# extracts title + body text, and saves as markdown with YAML frontmatter.
+# No API key needed. Caches by URL slug to avoid re-fetching. Default browser
+# is firefox (Chromium gets 403'd by some sites). Exit 3 if playwright-cli missing.
+# Output: LOCAL_PATH=<path> (last line) or exits non-zero with error details.
+#
 # GET mode defaults to stdout if no output_file given.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# --- slug_url: deterministic filename slug from a URL ---
+# Produces: {domain}_{path-slug}_{hash8}
+# domain: strip scheme, replace non-alphanum with underscore
+# path: strip query/fragment, replace non-alphanum with hyphens, truncate to 40 chars
+# hash8: first 8 chars of sha256(full URL)
+slug_url() {
+  local url="$1"
+  # Strip scheme
+  local domain="${url#*://}"
+  domain="${domain%%/*}"
+  domain=$(echo "$domain" | sed 's/[^a-zA-Z0-9]/_/g')
+
+  # Path: strip query and fragment, then slug
+  local no_scheme="${url#*://}"
+  local path=""
+  if [[ "$no_scheme" == *"/"* ]]; then
+    path="${no_scheme#*/}"    # everything after first /
+    path="${path%%\?*}"       # strip query string
+    path="${path%%#*}"        # strip fragment
+    path=$(echo "$path" | sed 's/[^a-zA-Z0-9]/-/g' | cut -c1-40)
+  fi
+
+  # Hash: first 8 chars of sha256
+  local hash8
+  hash8=$(printf '%s' "$url" | shasum -a 256 | cut -c1-8)
+
+  # Assemble (handle empty path)
+  if [[ -n "$path" ]]; then
+    echo "${domain}_${path}_${hash8}"
+  else
+    echo "${domain}__${hash8}"
+  fi
+}
+
+# --- Cache system ---
+# cache_read <cache_dir> <url>
+#   Checks for files matching the URL slug in cache_dir.
+#   Prints path and exits 0 on hit, exits 1 on miss.
+#   .cache.json is checked first as optimization; filesystem glob is source of truth.
+cache_read() {
+  local cache_dir="$1"
+  local url="$2"
+  local slug
+  slug=$(slug_url "$url")
+
+  # Optimization: check .cache.json first if jq available
+  if command -v jq &>/dev/null && [[ -f "$cache_dir/.cache.json" ]]; then
+    local cached_path
+    cached_path=$(jq -r --arg url "$url" '.[$url].path // empty' "$cache_dir/.cache.json" 2>/dev/null || true)
+    if [[ -n "$cached_path" && -f "$cache_dir/$cached_path" ]]; then
+      echo "$cache_dir/$cached_path"
+      return 0
+    fi
+  fi
+
+  # Source of truth: filesystem glob
+  local match
+  match=$(find "$cache_dir" -maxdepth 1 -name "*${slug}*" -type f 2>/dev/null | head -1)
+  if [[ -n "$match" ]]; then
+    echo "$match"
+    return 0
+  fi
+
+  return 1
+}
+
+# cache_write <cache_dir> <url> <relative_filename> <title> <content_type>
+#   Adds/updates an entry in .cache.json. If jq isn't available, skips silently.
+cache_write() {
+  local cache_dir="$1"
+  local url="$2"
+  local rel_filename="$3"
+  local title="$4"
+  local content_type="$5"
+
+  # Without jq, skip silently (cache still works via filesystem glob)
+  if ! command -v jq &>/dev/null; then
+    return 0
+  fi
+
+  local cache_file="$cache_dir/.cache.json"
+  local fetched_at
+  fetched_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+  # Read existing or start fresh
+  local existing="{}"
+  if [[ -f "$cache_file" ]]; then
+    existing=$(jq '.' "$cache_file" 2>/dev/null || echo "{}")
+    # If parse failed, delete and start fresh
+    if [[ "$existing" == "{}" && -s "$cache_file" ]]; then
+      rm -f "$cache_file"
+    fi
+  fi
+
+  # Update entry
+  echo "$existing" | jq --arg url "$url" \
+    --arg path "$rel_filename" \
+    --arg fetched "$fetched_at" \
+    --arg title "$title" \
+    --arg ct "$content_type" \
+    '.[$url] = {"path": $path, "fetched_at": $fetched, "title": $title, "content_type": $ct}' \
+    > "$cache_file"
+}
+
+# --- --source-only: let test harnesses source helper functions without running main ---
+if [[ "${1:-}" == "--source-only" ]]; then
+  return 0 2>/dev/null || exit 0
+fi
 
 # --write writes content from stdin to a file (for background sub-agents
 # that can't use the Write tool directly)
@@ -90,6 +206,117 @@ if [[ "${1:-}" == "--fetch-pdf" ]]; then
 
   FILE_SIZE=$(wc -c < "$OUTPUT_FILE" | tr -d ' ')
   echo "Downloaded: $OUTPUT_FILE ($FILE_SIZE bytes)"
+  echo "LOCAL_PATH=$OUTPUT_FILE"
+  exit 0
+fi
+
+# --fetch-html fetches a web page via playwright-cli and saves as markdown with
+# YAML frontmatter. Default browser is firefox (Chromium gets 403'd by medical sites).
+# Usage: pplx-curl.sh --fetch-html <URL> [output_dir] [--browser=firefox]
+if [[ "${1:-}" == "--fetch-html" ]]; then
+  shift
+  URL="${1:?ERROR: --fetch-html requires a URL}"
+  shift || true
+
+  # Parse remaining args: output_dir and --browser flag
+  OUTPUT_DIR="./research/sources"
+  BROWSER="firefox"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --browser=*) BROWSER="${1#--browser=}" ;;
+      *) OUTPUT_DIR="$1" ;;
+    esac
+    shift
+  done
+
+  mkdir -p "$OUTPUT_DIR"
+
+  # Cache check
+  CACHED_PATH=""
+  if CACHED_PATH=$(cache_read "$OUTPUT_DIR" "$URL"); then
+    echo "Cache hit: $CACHED_PATH"
+    echo "LOCAL_PATH=$CACHED_PATH"
+    exit 0
+  fi
+
+  # Dependency: playwright-cli
+  if ! command -v playwright-cli &>/dev/null; then
+    echo "ERROR: playwright-cli not found." >&2
+    echo "Install: npm install -g @anthropic-ai/playwright-cli" >&2
+    echo "  or:   brew install playwright-cli" >&2
+    exit 3
+  fi
+
+  # Dependency: jq (warn but continue)
+  if ! command -v jq &>/dev/null; then
+    echo "WARNING: jq not found. Cache index (.cache.json) will not be updated." >&2
+  fi
+
+  # Generate filename
+  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+  SLUG=$(slug_url "$URL")
+  FILENAME="${TIMESTAMP}_${SLUG}.md"
+  OUTPUT_FILE="$OUTPUT_DIR/$FILENAME"
+
+  # Ensure playwright-cli close runs on exit
+  PLAYWRIGHT_OPENED=false
+  cleanup_playwright() {
+    if $PLAYWRIGHT_OPENED; then
+      playwright-cli close 2>/dev/null || true
+    fi
+  }
+  trap cleanup_playwright EXIT
+
+  # Open browser (exit codes are ALWAYS 0, check output for errors)
+  set +e
+  OPEN_OUTPUT=$(playwright-cli open --browser="$BROWSER" "$URL" 2>&1)
+  set -e
+
+  if echo "$OPEN_OUTPUT" | grep -q '### Error'; then
+    echo "ERROR: playwright-cli open failed:" >&2
+    echo "$OPEN_OUTPUT" >&2
+    exit 1
+  fi
+  PLAYWRIGHT_OPENED=true
+
+  # Extract title
+  set +e
+  TITLE_RAW=$(playwright-cli eval "document.title" 2>&1)
+  set -e
+
+  # Extract body text
+  set +e
+  BODY_RAW=$(playwright-cli eval "document.body.innerText" 2>&1)
+  set -e
+
+  # Close browser
+  set +e
+  playwright-cli close 2>/dev/null
+  set -e
+  PLAYWRIGHT_OPENED=false
+
+  # Write file with YAML frontmatter + raw eval outputs
+  FETCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  cat > "$OUTPUT_FILE" <<FRONTMATTER
+---
+source_url: "$URL"
+title: $(echo "$TITLE_RAW" | head -1 | sed 's/^### Result[[:space:]]*//')
+fetched_at: "$FETCHED_AT"
+content_type: "text/html"
+---
+
+$TITLE_RAW
+
+$BODY_RAW
+FRONTMATTER
+
+  # Update cache index
+  cache_write "$OUTPUT_DIR" "$URL" "$FILENAME" \
+    "$(echo "$TITLE_RAW" | head -1 | sed 's/^### Result[[:space:]]*//')" \
+    "text/html"
+
+  FILE_SIZE=$(wc -c < "$OUTPUT_FILE" | tr -d ' ')
+  echo "Fetched: $OUTPUT_FILE ($FILE_SIZE bytes)"
   echo "LOCAL_PATH=$OUTPUT_FILE"
   exit 0
 fi
