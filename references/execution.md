@@ -79,9 +79,21 @@ The orchestrator dispatches a sub-agent with these parameters:
 
 ## Output Directory
 
-All output goes to `./research/` relative to the project root. If
-`~/.claude/research-engine.md` exists and defines `output_directory` in its
-Settings section, use that instead.
+All output goes to a single **canonical ABSOLUTE** research directory. Resolve it
+ONCE and pass the absolute path to `pplx-curl.sh`:
+1. If `~/.claude/research-engine.md` defines `output_directory` in its Settings
+   section, use that (expand `~`).
+2. Else use `<project-root>/research` resolved to an absolute path. **Never pass a
+   bare relative `./research/`** — if the current working directory is already inside
+   a `research/` dir, a relative path creates a nested `research/research/`. Resolve
+   to absolute first (e.g. `realpath`, or `cd` to the project root).
+
+**Concurrency safety (HARD):** multiple research agents may run in parallel and share
+this directory. Write ONLY the files for your own `research_id` / topic-slug. **Never
+delete, move, rename, `rm -r`, or "clean up" the research directory or any file you
+did not create** — that destroys other agents' output (observed 2026-05-28: one
+agent's cleanup deleted two siblings' completed thread files + raw JSON). If you find
+an unexpected nested `research/research/`, leave it in place; do not remove it.
 
 Directory creation is handled by `pplx-curl.sh --research` mode.
 
@@ -125,12 +137,20 @@ For multi-model synthesis patterns: see `references/models.md`.
 - Product research, visual topics, places, design -> `true`
 - Technical, analytical, factual -> `false`
 
-**date_filters** (auto-suggest based on query content):
-- Query contains temporal signals ("recent", "latest", "2025", "2026",
-  "last month", "since January", "this year") -> add
-  `"search_after_date_filter"` set to 6 months before today's date
-  (format: `"MM/DD/YYYY"`)
-- No temporal signal -> omit
+**date_filters** (auto-suggest — apply ONLY to time-sensitive/news topics, NEVER to
+evergreen/reference topics):
+- Genuinely time-sensitive (breaking news, a current event, "what changed this
+  month", prices/standings that move) -> add `"search_after_date_filter"` set to 6
+  months before today's date (format: `"MM/DD/YYYY"`).
+- EVERGREEN/REFERENCE even if it names a year — how something works, algorithm / API
+  / platform mechanics, documentation, policy, scientific consensus, definitions ->
+  **OMIT the date filter.** Authoritative primary sources (official docs, engineering
+  blogs, policy pages, papers) are usually older than 6 months; a recency filter
+  excludes them and leaves only freshly-published SEO bait, producing confident,
+  wrongly-attributed answers (observed 2026-05-28: a "2026 algorithm" query poisoned
+  by agency blogs with fabricated official citations).
+- A bare year mention ("as of 2026") is NOT a temporal signal -> omit.
+- Unsure -> omit. No filter is safer than the wrong filter.
 
 **domain_filters** (auto-suggest based on query content):
 - Query targets a specific ecosystem -> add `"search_domain_filter"` array:
