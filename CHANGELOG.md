@@ -4,10 +4,12 @@
 
 ### Changed — deep tier re-engined (Agent API + verification pass)
 
-- **Deep dives now run on Perplexity's Agent API** (`POST /v1/agent`) with a
-  frozen copy of the `deep-research` preset config
-  (`references/agent-api-frozen-deep-research.json`, captured 2026-06-11) so
-  Perplexity cannot change the engine underneath us. The hosted agent does
+- **Deep dives now run on Perplexity's Agent API** (`POST /v1/agent`) calling
+  the `deep-research` preset by name — Perplexity's preset improvements arrive
+  automatically; the verification pass is the per-run quality net and
+  `engine_model` in thread frontmatter makes preset changes visible.
+  `references/agent-api-frozen-deep-research.json` (captured 2026-06-11) is
+  kept as a documented emergency brake only. The hosted agent does
   retrieval and source reading; the sub-agent is now a verification layer:
   spot-verify 5+ load-bearing cited claims, entity hygiene, completeness audit,
   at most one supplementary sonar-pro call, corrections recorded in the thread
