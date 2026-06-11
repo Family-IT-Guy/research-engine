@@ -1,0 +1,18 @@
+status: live
+last_activity: 2026-06-11
+summary: >
+  v2.0.0 built on branch agent-api-engine (commit 6227a2a): deep tier re-engined
+  onto Perplexity Agent API (deep-research preset by name; frozen config kept
+  as emergency brake only — Ben 2026-06-11: inherit their improvements) + verification pass;
+  playwright fetch path deleted. Proven on real research 2026-06-11: quick scan
+  (Bark pricing, clean) + deep dive (Roblox safety 2026 -> production thread file,
+  33 claims verified, 2 errors caught, 2 engine misses recovered incl. Nevada AG
+  settlement, $0.63, 13 min; truncation-retry path exercised and worked).
+  Master still at 1.2.2. Rollback: tag v1.2.2-pre-switch, branch
+  pre-agent-api-1.2.2, tarballs in ~/.claude/plugins/local/.
+open:
+  - Ben reviews proof -> approve GitHub push (merge agent-api-engine to master,
+    push, update marketplace + reinstall local plugin cache)
+see_also:
+  - CHANGELOG.md
+  - ../research-engine-eval/deliverables/phase2-report-2026-06-11.md

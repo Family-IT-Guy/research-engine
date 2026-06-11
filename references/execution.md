@@ -331,10 +331,15 @@ is the second set of eyes that notices what's missing).
 
 ### Step 1: Engine Call
 
-Build the payload with LLM reasoning only: Read
-`references/agent-api-frozen-deep-research.json` from this plugin's directory,
-drop the `_comment` key, add `"input"` set to the research query. For cascade
-children, prepend `context_from_parent` to the input. Then a single Bash call:
+Build the payload with LLM reasoning only — call the preset by name so we
+inherit Perplexity's improvements automatically:
+
+```json
+{"preset": "deep-research", "input": "RESEARCH QUERY"}
+```
+
+For cascade children, prepend `context_from_parent` to the input. Then a
+single Bash call:
 
 ```bash
 path/to/pplx-curl.sh --agent "TOPIC_SLUG" 'PAYLOAD_JSON' [research_dir]
@@ -386,7 +391,9 @@ supplementary maximum: a gap that survives it belongs in a cascade request
 Same thread-file format as the quick scan (frontmatter + body), with the
 verification record added:
 
-- frontmatter extras: `engine: agent-api-deep-research-frozen-2026-06-11`,
+- frontmatter extras: `engine: agent-api deep-research preset`, `engine_model:`
+  (the `.model` field from the raw response — records which model the preset
+  used that day, so preset updates are visible in the research record),
   `claims_checked: N`, `claims_failed: N`, `supp_call: yes|no`,
   `corrections:` (list — what was removed/fixed/added and why)
 - body: corrected findings only (verified content; failed claims removed or

@@ -382,14 +382,15 @@ Rate limits depend on account tier. Check response headers:
 
 - Endpoint: `POST https://api.perplexity.ai/v1/agent` (same API key)
 - Called via `pplx-curl.sh --agent <slug> '<payload>' [research_dir]`
-- Payload: frozen config from `references/agent-api-frozen-deep-research.json`
-  (model `openai/gpt-5.2`, their research system prompt as `instructions`,
-  `web_search` high + `fetch_url` tools, reasoning high, max_steps 10) plus
-  `"input"` = the research query
+- Payload: `{"preset": "deep-research", "input": "<query>"}` — preset by
+  name, so Perplexity's preset improvements arrive automatically; the
+  verification pass is the per-run safety net, and `engine_model` in each
+  thread file records what the preset used that day
 - Response parsing: answer text at `.output[] | select(.type=="message") |
   .content[] | select(.type=="output_text") | .text`; sources at
   `.output[] | select(.type=="search_results") | .results[] | {title, url}`;
   cost at `.usage.cost.total_cost` (native dollars)
-- Refresh the frozen config deliberately from
-  docs.perplexity.ai/docs/agent-api/presets when desired; never call the
-  preset by name in production (preset-by-name drifts as Perplexity updates it)
+- Emergency brake: if a preset update degrades results,
+  `references/agent-api-frozen-deep-research.json` (captured 2026-06-11) can be
+  sent as the payload instead of the preset name to pin the old behavior while
+  investigating
