@@ -1,3 +1,7 @@
+> **2.0.0:** deep dives no longer choose a sonar model — they run on the
+> Agent API frozen deep-research config (see api-reference.md). The model
+> guidance below applies to quick scans and supplementary calls only.
+
 # Perplexity Sonar Models Reference
 
 ## Models
