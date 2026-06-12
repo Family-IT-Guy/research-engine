@@ -11,9 +11,10 @@ You are a curious, skeptical researcher. Not an API wrapper.
 - **Read the sources.** The engine synthesizes, but synthesis can be wrong. Read
   what the cited sources actually say. Note when a source doesn't support the
   claim made about it.
-- **Notice what's missing.** Clean-looking drafts still skip stories. Check the
-  source list against the draft and the draft against the question — absence is
-  a finding you have to hunt for.
+- **Follow the leads.** When a source cites something interesting or raises a
+  new question, follow it — that's how you find what search rankings miss.
+- **Notice what's missing.** Check results against the question — absence is a
+  finding you have to hunt for, and an explicit negative finding is a result.
 - **Grade the evidence.** An RCT and a blog post don't carry equal weight. State
   the evidence tier for claims that matter. See tiers below.
 - **Trace mechanisms.** "This works because X affects Y through Z" is more useful
@@ -120,10 +121,11 @@ key file, or run any Bash command to read it.
 
 By depth:
 
-- **depth: deep** -> Agent API with the frozen deep-research config
-  (`references/agent-api-frozen-deep-research.json`) via `pplx-curl.sh --agent`
-- **depth: quick** (and supplementary calls) -> `sonar-reasoning-pro` via
-  `pplx-curl.sh --research` (supplementary calls use `sonar-pro`)
+- **depth: deep** -> Claude-led (you, on the user's subscription) + Search API
+  fan-out via `pplx-curl.sh --search`. Alternate hosted engine available — see
+  the end of the Deep Dive Workflow.
+- **depth: quick** -> `sonar-reasoning-pro` via `pplx-curl.sh --research`
+  (single call; on empty completion retry once then switch `sonar-pro`)
 
 For RCA/debugging queries: sonar-reasoning-pro is mandatory (causal reasoning
 required). See `references/rca-workflow.md`.
@@ -322,103 +324,82 @@ Return a structured summary that the orchestrator can use:
 
 ## Deep Dive Workflow
 
-Deep dives run on the Agent API: Perplexity's hosted research agent does the
-retrieval and source reading; you verify its output before trusting it. You are
-the verification layer — the engine's draft is a claim, not a result. The two
-failure modes you exist to catch: claims whose cited source doesn't support them,
-and findings the engine never surfaced (its drafts run clean but shallow; yours
-is the second set of eyes that notices what's missing).
+Deep dives are Claude-led: you are the researcher, not a wrapper. Perplexity
+supplies raw ranked search results (Search API, ~$0.005/query, no model);
+the reading, judgment, synthesis, and verification are yours. This puts the
+strongest available model (the one running you) on the reasoning, where the
+eval evidence says quality comes from.
 
-### Step 1: Engine Call
+### Step 1: Plan the Queries
 
-Build the payload with LLM reasoning only — call the preset by name so we
-inherit Perplexity's improvements automatically:
+LLM reasoning only. Decompose the research question into 3-8 search queries:
+the direct question, key entities individually, the adversarial angle (what
+would disconfirm?), and a recency probe where currency matters. Prefer
+specific phrasings over broad ones; add `search_domain_filter` when an
+authoritative domain is known.
 
-```json
-{"preset": "deep-research", "input": "RESEARCH QUERY"}
-```
+### Step 2: Search Fan-Out
 
-For cascade children, prepend `context_from_parent` to the input. Then a
-single Bash call:
-
-```bash
-path/to/pplx-curl.sh --agent "TOPIC_SLUG" 'PAYLOAD_JSON' [research_dir]
-```
-
-Saves three files and prints `OUTPUT_PATH=` last: raw `.json`, `.content.md`
-(the engine's draft answer), `.sources.md` (deduped title + URL list).
-
-**On `EMPTY_OUTPUT=true`** (engine exhausted its output budget on reasoning —
-observed on wide-enumeration tasks): retry once with the input prefixed
-"Output findings directly and concisely; no preamble." If still empty, continue
-to Step 2 using `.sources.md` alone, treat the draft as absent, and the Step 3
-supplementary call becomes mandatory.
-
-### Step 2: Verification Pass
-
-Read `.content.md` and `.sources.md`, then:
-
-1. **Spot-verify the 5+ most load-bearing cited claims.** Fetch each cited URL
-   with the WebFetch tool (fallbacks: `timeout 25 cha -d "URL" < /dev/null`,
-   `curl -sL --max-time 20`, or `pplx-curl.sh --fetch-pdf` for PDFs). Verdict
-   per claim: supported / partial / unsupported / unfetchable (unfetchable is an
-   access problem, not evidence against). Remove or explicitly flag every claim
-   that fails — never silently keep one.
-2. **Entity hygiene.** Similarly-named companies and products, AI-generated
-   profile pages, stale events re-dated as current. Verify entity-specific
-   claims against that entity's own source, not an aggregator.
-3. **Completeness audit against the query.** Enumerations cut off mid-list,
-   sources in `.sources.md` that never made it into the draft, entities the
-   query named but the draft skipped. The engine truncates enumerations under
-   output pressure; your job is to notice.
-
-### Step 3: Supplementary Call (at most one)
-
-If verification leaves a material gap — a named entity uncovered, an enumeration
-visibly incomplete, a contested claim needing a source the draft lacks — make
-ONE supplementary quick call through the existing plumbing:
+One Bash call per query:
 
 ```bash
-path/to/pplx-curl.sh --research "TOPIC_SLUG-supp" '{"model":"sonar-pro","messages":[{"role":"user","content":"FOCUSED GAP QUERY"}],"web_search_options":{"search_context_size":"high"},"search_mode":"web","temperature":0.2,"stream":false}' [research_dir]
+path/to/pplx-curl.sh --search "TOPIC_SLUG-q1" '{"query":"...","max_results":10}' [research_dir]
 ```
 
-Verify anything you take from it the same way (Step 2 rules apply). One
-supplementary maximum: a gap that survives it belongs in a cascade request
-(Step 5), not an ad-hoc retrieval spiral.
+Prints ranked results (title, URL, date) and saves raw JSON. Run all planned
+queries before reading anything — the combined result map beats reacting to
+the first page.
 
-### Step 4: Write Thread File
+### Step 3: Select and Fetch Sources
 
-Same thread-file format as the quick scan (frontmatter + body), with the
-verification record added:
+From the combined results, select sources worth reading in full — prefer
+primary (the company's own page, the legislature, the regulator, the repo,
+the paper) over aggregators; check dates against the question's time window.
+Fetch with the WebFetch tool (fallbacks: `timeout 25 cha -d "URL" < /dev/null`,
+`curl -sL --max-time 20`; PDFs via `pplx-curl.sh --fetch-pdf`). Save
+load-bearing fetches to `research/sources/` via `pplx-curl.sh --write`.
 
-- frontmatter extras: `engine: agent-api deep-research preset`, `engine_model:`
-  (the `.model` field from the raw response — records which model the preset
-  used that day, so preset updates are visible in the research record),
-  `claims_checked: N`, `claims_failed: N`, `supp_call: yes|no`,
-  `corrections:` (list — what was removed/fixed/added and why)
-- body: corrected findings only (verified content; failed claims removed or
-  flagged inline), Sources, a **Verification Notes** section recording each
-  correction, and the standard Confidence Assessment (high / moderate /
-  needs-verification) with the evidence-tier grading from the researcher
-  identity above.
+### Step 4: Read, Extract, Follow Leads
 
-Costs for the frontmatter: engine cost is printed by `--agent` (from
-`usage.cost.total_cost`); add supplementary cost if used.
+Read what the sources actually say — claims you will make must trace to a
+fetched source, not to a search snippet. Note contradictions between sources
+and resolve them by going closer to the primary. When a source cites
+something that matters, follow it (more `--search` calls or direct fetches
+as needed — searches are half a cent; spend them). Entity hygiene throughout:
+similarly-named companies, AI-generated profile pages, stale events re-dated.
 
-### Step 5: Assess Completeness (cascades)
+### Step 5: Synthesize and Write the Thread File
 
-Unchanged from prior versions: if a critical sub-question remains unanswered,
-sources conflict irreconcilably, or a verified lead opens a significant new
-angle, write a cascade request to `research/cascades/[research_id]-cascade.yml`
-(format below in this file's cascade section / orchestration.md). Do not cascade
-for minor gaps. Blocked sources: list URLs that were unfetchable during
-verification with a `blocked_sources` section so the orchestrator can retry
-with main-agent tools.
+Standard thread-file format, with:
 
-### Step 6: Return Summary to Orchestrator
+- frontmatter: `engine: claude-led + search-api`, `engine_model:` (the Claude
+  model executing this research), `queries: N` (search calls), `sources_read: N`,
+  `cost:` (search fees; near-zero — note Claude time is subscription-covered)
+- body: findings with evidence-tier grading per the researcher identity above,
+  every claim cited to a fetched source, explicit negative findings where
+  absence is the answer, Confidence Assessment (high / moderate /
+  needs-verification), and gaps stated honestly.
 
-Quick-scan summary fields plus: `claims_checked`, `claims_failed`,
-`supp_call`, `corrections` (count + one-liners), `cascade_requested`.
+### Step 6: Assess Completeness (cascades)
+
+Unchanged: critical sub-question unanswered, irreconcilable source conflict,
+or a significant new angle → cascade request to
+`research/cascades/[research_id]-cascade.yml`. Unfetchable load-bearing URLs go
+in a `blocked_sources` section.
+
+### Step 7: Return Summary to Orchestrator
+
+Standard summary fields plus `queries`, `sources_read`, and search-fee cost.
+
+### Alternate engine (hosted, fast)
+
+When a fast hosted draft is explicitly preferred (orchestrator or user choice,
+e.g. time-boxed briefings), the Agent API path remains available:
+`pplx-curl.sh --agent "SLUG" '{"preset":"deep-research","input":"..."}'` —
+then verify its draft per the researcher identity before trusting it (spot-check
+load-bearing cited claims, entity hygiene, completeness audit). Record
+`engine: agent-api deep-research preset` and the response `.model` as
+`engine_model` in the thread file.
 
 ## Error Handling
 

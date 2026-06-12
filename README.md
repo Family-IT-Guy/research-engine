@@ -82,7 +82,7 @@ Four skills:
 ### Research depth
 
 - **Quick scan**: single API call, Perplexity synthesis only. For factual lookups. ~$0.01-0.05.
-- **Deep dive**: Agent API engine call (frozen deep-research config) + verification pass (claim spot-checks, entity hygiene, completeness audit) + cascade generation. For anything that matters. ~$0.30-0.70 typical.
+- **Deep dive**: Claude-led research over the Perplexity Search API — query fan-out, primary-source reading, claim-grounded synthesis + cascade generation. For anything that matters. Pennies in search fees; Claude time is subscription-covered. Hosted Agent API draft available as a fast alternate.
 
 ### The researcher
 
@@ -117,7 +117,8 @@ The extension file is optional. The base plugin works without it.
 | Model | Use | Cost |
 |-------|-----|------|
 | sonar-reasoning-pro | All queries (default) | ~$0.01-0.05 per query |
-| Agent API (frozen deep-research config) | Deep dives (2.0.0+) | ~$0.30-0.60 per task |
+| Search API (raw results, Claude-led) | Deep dives (2.0.0+) | ~$0.02-0.10 per task |
+| Agent API deep-research preset | alternate fast deep engine | ~$0.30-0.60 per task |
 
 See `references/models.md` for full pricing breakdown and selection guidance.
 

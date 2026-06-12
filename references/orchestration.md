@@ -144,7 +144,7 @@ For power users who want to see or adjust the technical parameters:
 N. [Topic name]
    Objective: [What this research will answer]
    Query: "[the specific research query]"
-   Model: [sonar-reasoning-pro (quick) / Agent API deep-research, frozen config (deep)] — [rationale]
+   Model: [sonar-reasoning-pro (quick) / Claude-led + Search API (deep)] — [rationale]
    Search mode: [web/academic/sec] — [rationale]
 
    Parameters:
@@ -332,11 +332,12 @@ If `~/.claude/research-engine.md` exists and defines a `youtube_tool` in Setting
 - Use for: factual lookups, simple comparisons, current event checks
 
 ### Deep Dive
-- Agent API engine call (frozen deep-research config) does retrieval + source
-  reading; sub-agent then verifies: spot-checks cited claims against fetched
-  sources, entity hygiene, completeness audit, at most one supplementary call
+- Claude-led: the sub-agent plans a search fan-out (Perplexity Search API,
+  raw results), reads primary sources, grounds every claim in a fetched
+  source, synthesizes with evidence tiers
 - Assesses completeness, writes cascade requests for gaps
-- Cost: ~$0.30-0.70 typical (engine + optional supplementary)
+- Cost: ~$0.02-0.10 in search fees (Claude time subscription-covered);
+  hosted Agent API draft available as fast alternate
 - Use for: high-stakes decisions, due diligence, academic review, anything that matters
 
 ## Cascade Rules

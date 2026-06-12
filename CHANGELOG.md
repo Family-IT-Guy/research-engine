@@ -2,39 +2,40 @@
 
 ## 2.0.0 — 2026-06-11
 
-### Changed — deep tier re-engined (Agent API + verification pass)
+### Changed — deep tier re-architected: Claude-led research on raw search
 
-- **Deep dives now run on Perplexity's Agent API** (`POST /v1/agent`) calling
-  the `deep-research` preset by name — Perplexity's preset improvements arrive
-  automatically; the verification pass is the per-run quality net and
-  `engine_model` in thread frontmatter makes preset changes visible.
-  `references/agent-api-frozen-deep-research.json` (captured 2026-06-11) is
-  kept as a documented emergency brake only. The hosted agent does
-  retrieval and source reading; the sub-agent is now a verification layer:
-  spot-verify 5+ load-bearing cited claims, entity hygiene, completeness audit,
-  at most one supplementary sonar-pro call, corrections recorded in the thread
-  file. Flow validated in a 20-run blind-graded head-to-head (2026-06-11):
-  96.7% citation precision, half the cost and ~2x the speed of the 1.x deep dive.
+- **Deep dives are now Claude-led.** The executing Claude (user's Max
+  subscription — strongest model, zero marginal token cost) plans query
+  fan-outs, reads primary sources, synthesizes, and grounds every claim in a
+  fetched source. Perplexity supplies retrieval only: the Search API
+  (`pplx-curl.sh --search`, raw ranked results, ~$0.005/query, no token
+  charges). Decision: Ben 2026-06-11 (strategic log) — quality evidence from a
+  50-run blind-graded eval favored Claude-heavy architecture; quota not a
+  constraint.
+- **Hosted alternate kept:** `pplx-curl.sh --agent` calls the Agent API
+  `deep-research` preset by name (inherits Perplexity's improvements) for
+  cases where a fast hosted draft is explicitly preferred; its draft gets the
+  verification pass (claim spot-checks, entity hygiene, completeness audit).
+  `references/agent-api-frozen-deep-research.json` (captured 2026-06-11)
+  documents the preset config of record and can pin old behavior if a preset
+  update degrades.
 - **Quick tier unchanged** (sonar-reasoning-pro single call) plus documented
   recovery for the API-side empty-completion bug: retry once, then switch to
   sonar-pro.
-- `pplx-curl.sh --agent` mode added: posts to /v1/agent, saves raw JSON +
-  `.content.md` + `.sources.md`, citation gate, empty-output gate, cost line.
+- Thread frontmatter now records `engine` and `engine_model` per run.
 
 ### Removed
 
-- **`--fetch-html` (playwright) and the wave-pattern source-reading machinery.**
-  The shared playwright session collided across parallel research agents
-  (three independent cross-contamination incidents, 2026-06-11) and was the
-  source of all operational failures in eval. Verification fetching uses
-  WebFetch/chawan/curl; PDFs still via `--fetch-pdf` (plain curl, kept).
-- `scripts/test-fetch-html.sh`.
+- **`--fetch-html` (playwright) and its test script.** The shared playwright
+  session collided across parallel research agents (three independent
+  cross-contamination incidents during eval) and caused every 1.x operational
+  failure. Fetching now uses WebFetch/chawan/curl; PDFs via `--fetch-pdf`
+  (plain curl, kept).
 
 ### Rollback
 
 Tag `v1.2.2-pre-switch` / branch `pre-agent-api-1.2.2`; tarballs in
 `~/.claude/plugins/local/research-engine-*-20260611.tar.gz`.
-
 
 ## 1.2.0 — 2026-04-10
 
