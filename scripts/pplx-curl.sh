@@ -359,6 +359,42 @@ elif [[ "${1:-}" == "--agent" ]]; then
   echo "Content: $CONTENT_FILE ($(wc -c < "$CONTENT_FILE" | tr -d ' ') bytes)"
   echo "OUTPUT_PATH=$OUTPUT_FILE"
 
+elif [[ "${1:-}" == "--search" ]]; then
+  # --search posts to the Search API (POST /search): raw ranked results, no
+  # model, $5 per 1K requests. Used by the Claude-led deep-dive loop.
+  # Usage: pplx-curl.sh --search <slug> '<json_payload>' [research_dir]
+  # Payload example: {"query":"...", "max_results": 10}
+  shift
+  TOPIC_SLUG="$1"
+  PAYLOAD="$2"
+  RESEARCH_DIR="${3:-./research}"
+
+  mkdir -p "$RESEARCH_DIR/raw"
+  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+  OUTPUT_FILE="$RESEARCH_DIR/raw/${TIMESTAMP}_${TOPIC_SLUG}.search.json"
+
+  HTTP_CODE=$(curl -s -w "%{http_code}" -o "$OUTPUT_FILE" \
+    --max-time 60 \
+    "https://api.perplexity.ai/search" \
+    -H "Authorization: Bearer ${PPLX_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "$PAYLOAD")
+
+  if [[ "$HTTP_CODE" -ge 400 ]]; then
+    echo "ERROR: Search API returned HTTP $HTTP_CODE" >&2
+    cat "$OUTPUT_FILE" >&2
+    exit 1
+  fi
+
+  if command -v jq &>/dev/null; then
+    TMP=$(mktemp)
+    jq '.' "$OUTPUT_FILE" > "$TMP" 2>/dev/null && mv "$TMP" "$OUTPUT_FILE" || rm -f "$TMP"
+    RESULT_COUNT=$(jq '.results | length' "$OUTPUT_FILE" 2>/dev/null || echo 0)
+    echo "Results: $RESULT_COUNT"
+    jq -r '.results[]? | "- \(.title // "untitled") — \(.url) (\(.date // "n.d."))"' "$OUTPUT_FILE" 2>/dev/null | head -20
+  fi
+  echo "OUTPUT_PATH=$OUTPUT_FILE"
+
 elif [[ "${1:-}" == "--get" ]]; then
   shift
   URL="$1"

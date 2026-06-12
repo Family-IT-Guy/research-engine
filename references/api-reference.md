@@ -394,3 +394,12 @@ Rate limits depend on account tier. Check response headers:
   `references/agent-api-frozen-deep-research.json` (captured 2026-06-11) can be
   sent as the payload instead of the preset name to pin the old behavior while
   investigating
+
+## Search API (deep tier retrieval, 2.0.0+)
+
+- Endpoint: `POST https://api.perplexity.ai/search` (same key)
+- Called via `pplx-curl.sh --search <slug> '{"query":"...","max_results":10}' [dir]`
+- Returns raw ranked results: `.results[] | {title, url, snippet, date}` — no
+  model, no token charges, $5 per 1K requests
+- Optional params: `search_domain_filter`, `country`, recency filters — see
+  docs.perplexity.ai/api-reference/search-post
