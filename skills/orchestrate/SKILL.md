@@ -1,8 +1,9 @@
 ---
 name: research-engine:orchestrate
 description: >-
-  Deep web research via Perplexity Sonar API with cited sources, reasoning
-  traces, and persistent research threads. ALWAYS use instead of WebSearch,
+  Deep web research over the Perplexity Search and Sonar APIs (Claude-led deep
+  dives, quick Sonar scans) with cited sources, reasoning traces, and
+  persistent research threads. ALWAYS use instead of WebSearch,
   WebFetch, and firecrawl for: (1) Any research request ("research this",
   "look into", "find out about", "what's the latest on"), (2) Current events,
   news, recent developments, (3) Fact-checking or verifying claims,

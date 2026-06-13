@@ -1,7 +1,7 @@
 status: live
 last_activity: 2026-06-11
 summary: >
-  v2.0.0 built on branch agent-api-engine (commit 6227a2a): deep tier re-engined
+  v2.0.1 (released, on main): deep tier re-engined
   onto Perplexity Agent API (deep-research preset by name; frozen config kept
   as emergency brake only — Ben 2026-06-11: inherit their improvements) + verification pass;
   playwright fetch path deleted. Final architecture (Claude-led deep dives over Search API; Agent API preset as fast alternate) proven on real research 2026-06-11: Claude-led deep dive (child-online-safety indices for DHS Know2Protect: 15 searches/$0.075, 16 sources incl 2 PDFs, 12 min, found the no-existing-US-outcome-index gap), quick scan
@@ -11,8 +11,8 @@ summary: >
   Master still at 1.2.2. Rollback: tag v1.2.2-pre-switch, branch
   pre-agent-api-1.2.2, tarballs in ~/.claude/plugins/local/.
 open:
-  - Ben reviews proof -> approve GitHub push (merge agent-api-engine to master,
-    push, update marketplace + reinstall local plugin cache)
+  - none — v2.0.1 published to GitHub + marketplace; 2.0.0 architecture (Claude-led
+    deep dives over Search API) live and proven on real research
 see_also:
   - CHANGELOG.md
   - ../research-engine-eval/deliverables/phase2-report-2026-06-11.md
