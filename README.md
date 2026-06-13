@@ -6,7 +6,7 @@ Cited web research for Claude Code. Ask a question, get structured findings with
 
 ## What it does
 
-You ask Claude to research something. Instead of searching the web and giving you a summary it might have made up, the research engine calls the Perplexity Sonar API, saves the complete response, reads the primary sources, follows interesting leads, and writes a structured thread file with citations, confidence assessments, and cost tracking.
+You ask Claude to research something. Instead of searching the web and giving you a summary it might have made up, the research engine runs web searches through Perplexity, reads the primary sources itself, follows interesting leads, and writes a structured thread file with citations, confidence assessments, and cost tracking. Deep dives are Claude-led over the Perplexity Search API; quick lookups use a single Sonar call.
 
 Every finding traces back to a source. Every source is saved. If something looks incomplete, the system generates follow-up research requests and asks if you want to keep digging.
 

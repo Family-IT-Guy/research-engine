@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.1 — 2026-06-13
+
+### Fixed
+
+- Skill descriptions and README opener no longer say deep research runs "via
+  Perplexity Sonar API" — corrected to reflect 2.0.0: Claude-led deep dives
+  over the Search API, quick Sonar scans. Trigger/description text only; no
+  behavior change.
+
+
 ## 2.0.0 — 2026-06-11
 
 ### Changed — deep tier re-architected: Claude-led research on raw search
