@@ -82,7 +82,7 @@ Four skills:
 ### Research depth
 
 - **Quick scan**: single API call, Perplexity synthesis only. For factual lookups. ~$0.01-0.05.
-- **Deep dive**: API call + primary source reading + wave pattern + cascade generation. For anything that matters. ~$0.10-5.00+.
+- **Deep dive**: Claude-led research over the Perplexity Search API — query fan-out, primary-source reading, claim-grounded synthesis + cascade generation. For anything that matters. Pennies in search fees; Claude time is subscription-covered. Hosted Agent API draft available as a fast alternate.
 
 ### The researcher
 
@@ -117,17 +117,14 @@ The extension file is optional. The base plugin works without it.
 | Model | Use | Cost |
 |-------|-----|------|
 | sonar-reasoning-pro | All queries (default) | ~$0.01-0.05 per query |
-| sonar-deep-research | Exhaustive research | ~$0.50-3.00 per query |
+| Search API (raw results, Claude-led) | Deep dives (2.0.0+) | ~$0.02-0.10 per task |
+| Agent API deep-research preset | alternate fast deep engine | ~$0.30-0.60 per task |
 
 See `references/models.md` for full pricing breakdown and selection guidance.
 
 ## Prerequisites
 
 - **jq** — JSON processor, used for cache index operations. Install: `brew install jq` (macOS), `apt install jq` (Linux), `choco install jq` (Windows).
-- **playwright-cli** — browser automation for fetching JavaScript-rendered web pages during deep-dive research. Install:
-  - CLI: `brew install playwright-cli` (macOS) or `npm install -g @playwright/cli` (cross-platform)
-  - Browser: `playwright-cli install-browser firefox` (required for default browser)
-  - Skill: clone [microsoft/playwright-cli](https://github.com/microsoft/playwright-cli), copy `skills/playwright-cli/` to `~/.claude/skills/playwright-cli/`
 
 ## Requirements
 
