@@ -377,3 +377,29 @@ Rate limits depend on account tier. Check response headers:
 - `X-RateLimit-Limit`
 - `X-RateLimit-Remaining`
 - `X-RateLimit-Reset`
+
+## Agent API (deep tier engine, 2.0.0+)
+
+- Endpoint: `POST https://api.perplexity.ai/v1/agent` (same API key)
+- Called via `pplx-curl.sh --agent <slug> '<payload>' [research_dir]`
+- Payload: `{"preset": "deep-research", "input": "<query>"}` — preset by
+  name, so Perplexity's preset improvements arrive automatically; the
+  verification pass is the per-run safety net, and `engine_model` in each
+  thread file records what the preset used that day
+- Response parsing: answer text at `.output[] | select(.type=="message") |
+  .content[] | select(.type=="output_text") | .text`; sources at
+  `.output[] | select(.type=="search_results") | .results[] | {title, url}`;
+  cost at `.usage.cost.total_cost` (native dollars)
+- Emergency brake: if a preset update degrades results,
+  `references/agent-api-frozen-deep-research.json` (captured 2026-06-11) can be
+  sent as the payload instead of the preset name to pin the old behavior while
+  investigating
+
+## Search API (deep tier retrieval, 2.0.0+)
+
+- Endpoint: `POST https://api.perplexity.ai/search` (same key)
+- Called via `pplx-curl.sh --search <slug> '{"query":"...","max_results":10}' [dir]`
+- Returns raw ranked results: `.results[] | {title, url, snippet, date}` — no
+  model, no token charges, $5 per 1K requests
+- Optional params: `search_domain_filter`, `country`, recency filters — see
+  docs.perplexity.ai/api-reference/search-post

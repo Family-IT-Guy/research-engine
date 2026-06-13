@@ -8,8 +8,8 @@
 #   POST:       pplx-curl.sh <url> <output_file> <json_payload>
 #   GET:        pplx-curl.sh --get <url> [output_file]
 #   RESEARCH:   pplx-curl.sh --research <topic_slug> <json_payload> [research_dir]
+#   AGENT:      pplx-curl.sh --agent <topic_slug> <json_payload> [research_dir]
 #   FETCH-PDF:  pplx-curl.sh --fetch-pdf <url> [output_dir]
-#   FETCH-HTML: pplx-curl.sh --fetch-html <url> [output_dir] [--browser=firefox]
 #   NEXT-ID:    pplx-curl.sh --next-id [research_dir] [count]
 #   WRITE:      pplx-curl.sh --write <filepath>  (reads content from stdin)
 #
@@ -22,11 +22,11 @@
 # parse it. No API key needed. Validates the download is actually a PDF.
 # Output: LOCAL_PATH=<path> (last line) or exits non-zero with error details.
 #
-# FETCH-HTML mode fetches a web page via playwright-cli (headless browser),
-# extracts title + body text, and saves as markdown with YAML frontmatter.
-# No API key needed. Caches by URL slug to avoid re-fetching. Default browser
-# is firefox (Chromium gets 403'd by some sites). Exit 3 if playwright-cli missing.
-# Output: LOCAL_PATH=<path> (last line) or exits non-zero with error details.
+# AGENT mode posts to the Agent API (/v1/agent) with the same file conventions
+# as RESEARCH mode, plus a .sources.md extract and an empty-output gate.
+# Verification-pass fetching of cited URLs uses the WebFetch tool or chawan,
+# NOT this script — the playwright fetch path was removed in 2.0.0 (shared
+# browser sessions collided across parallel agents).
 #
 # GET mode defaults to stdout if no output_file given.
 
@@ -210,119 +210,6 @@ if [[ "${1:-}" == "--fetch-pdf" ]]; then
   exit 0
 fi
 
-# --fetch-html fetches a web page via playwright-cli and saves as markdown with
-# YAML frontmatter. Default browser is firefox (Chromium gets 403'd by medical sites).
-# Usage: pplx-curl.sh --fetch-html <URL> [output_dir] [--browser=firefox]
-if [[ "${1:-}" == "--fetch-html" ]]; then
-  shift
-  URL="${1:?ERROR: --fetch-html requires a URL}"
-  shift || true
-
-  # Parse remaining args: output_dir and --browser flag
-  OUTPUT_DIR="./research/sources"
-  BROWSER="firefox"
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      --browser=*) BROWSER="${1#--browser=}" ;;
-      --browser) shift; BROWSER="${1:-default}" ;;
-      *) OUTPUT_DIR="$1" ;;
-    esac
-    shift
-  done
-
-  mkdir -p "$OUTPUT_DIR"
-
-  # Cache check
-  CACHED_PATH=""
-  if CACHED_PATH=$(cache_read "$OUTPUT_DIR" "$URL"); then
-    echo "Cache hit: $CACHED_PATH"
-    echo "LOCAL_PATH=$CACHED_PATH"
-    exit 0
-  fi
-
-  # Dependency: playwright-cli
-  if ! command -v playwright-cli &>/dev/null; then
-    echo "ERROR: playwright-cli not found." >&2
-    echo "Install: npm install -g @anthropic-ai/playwright-cli" >&2
-    echo "  or:   brew install playwright-cli" >&2
-    exit 3
-  fi
-
-  # Dependency: jq (warn but continue)
-  if ! command -v jq &>/dev/null; then
-    echo "WARNING: jq not found. Cache index (.cache.json) will not be updated." >&2
-  fi
-
-  # Generate filename
-  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-  SLUG=$(slug_url "$URL")
-  FILENAME="${TIMESTAMP}_${SLUG}.md"
-  OUTPUT_FILE="$OUTPUT_DIR/$FILENAME"
-
-  # Ensure playwright-cli close runs on exit
-  PLAYWRIGHT_OPENED=false
-  cleanup_playwright() {
-    if $PLAYWRIGHT_OPENED; then
-      playwright-cli close 2>/dev/null || true
-    fi
-  }
-  trap cleanup_playwright EXIT
-
-  # Open browser (check exit code AND output for errors)
-  set +e
-  OPEN_OUTPUT=$(playwright-cli open --browser="$BROWSER" "$URL" 2>&1)
-  OPEN_EXIT=$?
-  set -e
-
-  if [[ $OPEN_EXIT -ne 0 ]] || echo "$OPEN_OUTPUT" | grep -qE '### Error|not installed|Error:'; then
-    echo "ERROR: playwright-cli open failed (exit $OPEN_EXIT):" >&2
-    echo "$OPEN_OUTPUT" >&2
-    exit 1
-  fi
-  PLAYWRIGHT_OPENED=true
-
-  # Extract title
-  set +e
-  TITLE_RAW=$(playwright-cli eval "document.title" 2>&1)
-  set -e
-
-  # Extract body text
-  set +e
-  BODY_RAW=$(playwright-cli eval "document.body.innerText" 2>&1)
-  set -e
-
-  # Close browser
-  set +e
-  playwright-cli close 2>/dev/null
-  set -e
-  PLAYWRIGHT_OPENED=false
-
-  # Write file with YAML frontmatter + raw eval outputs
-  FETCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-  cat > "$OUTPUT_FILE" <<FRONTMATTER
----
-source_url: "$URL"
-title: $(echo "$TITLE_RAW" | head -1 | sed 's/^### Result[[:space:]]*//')
-fetched_at: "$FETCHED_AT"
-content_type: "text/html"
----
-
-$TITLE_RAW
-
-$BODY_RAW
-FRONTMATTER
-
-  # Update cache index
-  cache_write "$OUTPUT_DIR" "$URL" "$FILENAME" \
-    "$(echo "$TITLE_RAW" | head -1 | sed 's/^### Result[[:space:]]*//')" \
-    "text/html"
-
-  FILE_SIZE=$(wc -c < "$OUTPUT_FILE" | tr -d ' ')
-  echo "Fetched: $OUTPUT_FILE ($FILE_SIZE bytes)"
-  echo "LOCAL_PATH=$OUTPUT_FILE"
-  exit 0
-fi
-
 # --- API key ---
 PPLX_KEY=""
 if [[ -f "$HOME/.claude/research-engine.env" ]]; then
@@ -394,6 +281,117 @@ if [[ "${1:-}" == "--research" ]]; then
   echo "Saved: $OUTPUT_FILE ($(wc -c < "$OUTPUT_FILE" | tr -d ' ') bytes)"
   if [[ -s "$CONTENT_FILE" ]]; then
     echo "Content: $CONTENT_FILE ($(wc -c < "$CONTENT_FILE" | tr -d ' ') bytes)"
+  fi
+  echo "OUTPUT_PATH=$OUTPUT_FILE"
+
+elif [[ "${1:-}" == "--agent" ]]; then
+  # --agent posts to the Agent API (POST /v1/agent) and saves raw + content,
+  # same file conventions as --research. Payload is built by the calling skill
+  # (frozen deep-research config merged with the task input).
+  shift
+  TOPIC_SLUG="$1"
+  PAYLOAD="$2"
+  RESEARCH_DIR="${3:-./research}"
+
+  mkdir -p "$RESEARCH_DIR/raw" "$RESEARCH_DIR/sources" "$RESEARCH_DIR/cascades"
+  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+  OUTPUT_FILE="$RESEARCH_DIR/raw/${TIMESTAMP}_${TOPIC_SLUG}.json"
+
+  HTTP_CODE=$(curl -s -w "%{http_code}" -o "$OUTPUT_FILE" \
+    --max-time 1500 \
+    "https://api.perplexity.ai/v1/agent" \
+    -H "Authorization: Bearer ${PPLX_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "$PAYLOAD")
+
+  if [[ "$HTTP_CODE" -ge 400 ]]; then
+    echo "ERROR: Agent API returned HTTP $HTTP_CODE" >&2
+    cat "$OUTPUT_FILE" >&2
+    exit 1
+  fi
+
+  if command -v jq &>/dev/null; then
+    TMP=$(mktemp)
+    if jq '.' "$OUTPUT_FILE" > "$TMP" 2>/dev/null; then
+      mv "$TMP" "$OUTPUT_FILE"
+    else
+      rm -f "$TMP"
+    fi
+  fi
+
+  CONTENT_FILE="${OUTPUT_FILE%.json}.content.md"
+  if command -v jq &>/dev/null; then
+    jq -r '[.output[]? | select(.type=="message") | .content[]? | select(.type=="output_text") | .text] | join("\n")' \
+      "$OUTPUT_FILE" > "$CONTENT_FILE" 2>/dev/null
+
+    # Sources extract: title + url per unique result, for the verification pass
+    SOURCES_FILE="${OUTPUT_FILE%.json}.sources.md"
+    jq -r '[.output[]? | select(.type=="search_results") | .results[]?] | unique_by(.url) | .[] | "- \(.title // "untitled") — \(.url)"' \
+      "$OUTPUT_FILE" > "$SOURCES_FILE" 2>/dev/null
+
+    CITE_COUNT=$(jq '[.output[]? | select(.type=="search_results") | .results[]?] | length' "$OUTPUT_FILE" 2>/dev/null || echo "0")
+    [[ "$CITE_COUNT" == "null" ]] && CITE_COUNT=0
+    COST=$(jq -r '.usage.cost.total_cost // "unknown"' "$OUTPUT_FILE" 2>/dev/null)
+
+    # Empty-output gate: engine can exhaust its output budget on reasoning
+    # (observed 2026-06-11 on wide-enumeration tasks) — citations present, text empty.
+    CONTENT_BYTES=$(wc -c < "$CONTENT_FILE" | tr -d ' ')
+    if [[ "$CONTENT_BYTES" -lt 200 ]]; then
+      echo "EMPTY_OUTPUT=true (content ${CONTENT_BYTES} bytes; citations: $CITE_COUNT)" >&2
+      echo "Raw preserved at: $OUTPUT_FILE — retry guidance in execution.md" >&2
+      echo "OUTPUT_PATH=$OUTPUT_FILE"
+      exit 1
+    fi
+
+    if [[ "$CITE_COUNT" -eq 0 ]]; then
+      echo "REJECTED: 0 web citations in Agent API output. Response is training-data only." >&2
+      rm -f "$CONTENT_FILE"
+      echo "CITATION_CHECK_FAILED=true"
+      echo "OUTPUT_PATH=$OUTPUT_FILE"
+      exit 1
+    fi
+    echo "Citations: $CITE_COUNT"
+    echo "Cost: $COST"
+    echo "Sources: $SOURCES_FILE"
+  fi
+
+  echo "Saved: $OUTPUT_FILE ($(wc -c < "$OUTPUT_FILE" | tr -d ' ') bytes)"
+  echo "Content: $CONTENT_FILE ($(wc -c < "$CONTENT_FILE" | tr -d ' ') bytes)"
+  echo "OUTPUT_PATH=$OUTPUT_FILE"
+
+elif [[ "${1:-}" == "--search" ]]; then
+  # --search posts to the Search API (POST /search): raw ranked results, no
+  # model, $5 per 1K requests. Used by the Claude-led deep-dive loop.
+  # Usage: pplx-curl.sh --search <slug> '<json_payload>' [research_dir]
+  # Payload example: {"query":"...", "max_results": 10}
+  shift
+  TOPIC_SLUG="$1"
+  PAYLOAD="$2"
+  RESEARCH_DIR="${3:-./research}"
+
+  mkdir -p "$RESEARCH_DIR/raw"
+  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+  OUTPUT_FILE="$RESEARCH_DIR/raw/${TIMESTAMP}_${TOPIC_SLUG}.search.json"
+
+  HTTP_CODE=$(curl -s -w "%{http_code}" -o "$OUTPUT_FILE" \
+    --max-time 60 \
+    "https://api.perplexity.ai/search" \
+    -H "Authorization: Bearer ${PPLX_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "$PAYLOAD")
+
+  if [[ "$HTTP_CODE" -ge 400 ]]; then
+    echo "ERROR: Search API returned HTTP $HTTP_CODE" >&2
+    cat "$OUTPUT_FILE" >&2
+    exit 1
+  fi
+
+  if command -v jq &>/dev/null; then
+    TMP=$(mktemp)
+    jq '.' "$OUTPUT_FILE" > "$TMP" 2>/dev/null && mv "$TMP" "$OUTPUT_FILE" || rm -f "$TMP"
+    RESULT_COUNT=$(jq '.results | length' "$OUTPUT_FILE" 2>/dev/null || echo 0)
+    echo "Results: $RESULT_COUNT"
+    jq -r '.results[]? | "- \(.title // "untitled") — \(.url) (\(.date // "n.d."))"' "$OUTPUT_FILE" 2>/dev/null | head -20
   fi
   echo "OUTPUT_PATH=$OUTPUT_FILE"
 
