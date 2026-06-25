@@ -52,9 +52,15 @@ settings.json allow rules. This is a Claude Code platform limitation
 (tested 2026-04-03, v2.1.91). All file writes MUST go through
 `pplx-curl.sh --write`.
 
+**Locating the script.** `pplx-curl.sh` ships in this plugin at
+`scripts/pplx-curl.sh` and is NOT on PATH — do not call it by bare name.
+Invoke it by absolute path as `$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh`, where
+`$CLAUDE_PLUGIN_ROOT` is this plugin's install directory (resolve it to the
+directory this skill loaded from if your shell has not exported it). Resolve
+that absolute path once and reuse it for every call.
+
 **Rules:**
-- All Bash calls use `pplx-curl.sh` (find it in the research-engine
-  plugin's `scripts/` directory)
+- All Bash calls use `$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh`
 - All file reads: use the **Read** tool
 - All file writes: use `pplx-curl.sh --write <filepath>` with content
   piped via heredoc. Do NOT use the Write tool (denied for background agents).
@@ -198,11 +204,10 @@ with backslash for Bash argument passing.
 This is the ONLY Bash command in the entire workflow. No other Bash calls
 are permitted.
 
-Locate `pplx-curl.sh` in the research-engine plugin's `scripts/` directory
-and call it:
+Call the script by its absolute path (see Locating the script above):
 
 ```bash
-path/to/pplx-curl.sh --research "TOPIC_SLUG" '{"model":"MODEL_NAME","messages":[{"role":"system","content":"SYSTEM_PROMPT"},{"role":"user","content":"USER_QUERY"}],"web_search_options":{"search_context_size":"high"},"search_mode":"SEARCH_MODE","return_related_questions":true,"return_images":RETURN_IMAGES,"temperature":0.2,"stream":false}'
+"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" --research "TOPIC_SLUG" '{"model":"MODEL_NAME","messages":[{"role":"system","content":"SYSTEM_PROMPT"},{"role":"user","content":"USER_QUERY"}],"web_search_options":{"search_context_size":"high"},"search_mode":"SEARCH_MODE","return_related_questions":true,"return_images":RETURN_IMAGES,"temperature":0.2,"stream":false}'
 ```
 
 The `--research` mode handles internally:
@@ -246,7 +251,7 @@ Use `pplx-curl.sh --write` to create `research/[topic-slug]-YYYY-MM-DD.md`
 with YAML frontmatter. Pipe content via heredoc:
 
 ```bash
-pplx-curl.sh --write "research/[topic-slug]-YYYY-MM-DD.md" <<'THREAD_EOF'
+"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" --write "research/[topic-slug]-YYYY-MM-DD.md" <<'THREAD_EOF'
 [full thread file content here]
 THREAD_EOF
 ```
@@ -343,7 +348,7 @@ authoritative domain is known.
 One Bash call per query:
 
 ```bash
-path/to/pplx-curl.sh --search "TOPIC_SLUG-q1" '{"query":"...","max_results":10}' [research_dir]
+"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" --search "TOPIC_SLUG-q1" '{"query":"...","max_results":10}' [research_dir]
 ```
 
 Prints ranked results (title, URL, date) and saves raw JSON. Run all planned
@@ -395,7 +400,7 @@ Standard summary fields plus `queries`, `sources_read`, and search-fee cost.
 
 When a fast hosted draft is explicitly preferred (orchestrator or user choice,
 e.g. time-boxed briefings), the Agent API path remains available:
-`pplx-curl.sh --agent "SLUG" '{"preset":"deep-research","input":"..."}'` —
+`"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" --agent "SLUG" '{"preset":"deep-research","input":"..."}'` —
 then verify its draft per the researcher identity before trusting it (spot-check
 load-bearing cited claims, entity hygiene, completeness audit). Record
 `engine: agent-api deep-research preset` and the response `.model` as

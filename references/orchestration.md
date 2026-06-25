@@ -373,15 +373,20 @@ Format: `RE-YYYY-MMDD-NNN` — sequential per calendar day.
 
 Generate all IDs BEFORE dispatching sub-agents to avoid race conditions.
 
-Use pplx-curl.sh:
+**Locating the script.** `pplx-curl.sh` ships in this plugin at
+`scripts/pplx-curl.sh` and is NOT on PATH — do not call it by bare name.
+Invoke it by absolute path as `$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh`, where
+`$CLAUDE_PLUGIN_ROOT` is this plugin's install directory (resolve it to the
+directory this skill loaded from if your shell has not exported it). Resolve
+that absolute path once and reuse it for every call.
 
 ```bash
-pplx-curl.sh --next-id [research_dir] [count]
+"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" --next-id [research_dir] [count]
 ```
 
 Examples:
-- `pplx-curl.sh --next-id` — one ID, default `./research/` directory
-- `pplx-curl.sh --next-id ./research 3` — three sequential IDs
+- `"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" --next-id` — one ID, default `./research/` directory
+- `"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" --next-id ./research 3` — three sequential IDs
 
 ## Sub-Agent Dispatch Templates
 

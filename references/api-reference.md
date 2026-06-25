@@ -60,11 +60,11 @@ Poll until `status` is `COMPLETED` or `FAILED`. When completed, the `response` f
 ### Async curl Example
 
 ```bash
-# Submit async request (use plugin's pplx-curl.sh)
-pplx-curl.sh "https://api.perplexity.ai/async/chat/completions" /tmp/async-submit.json '{"request":{"model":"sonar-deep-research","messages":[{"role":"user","content":"QUERY"}],"web_search_options":{"search_context_size":"high"},"reasoning_effort":"high","temperature":0.2,"stream":false}}'
+# Submit async request — call pplx-curl.sh by its absolute path
+"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" "https://api.perplexity.ai/async/chat/completions" /tmp/async-submit.json '{"request":{"model":"sonar-deep-research","messages":[{"role":"user","content":"QUERY"}],"web_search_options":{"search_context_size":"high"},"reasoning_effort":"high","temperature":0.2,"stream":false}}'
 
 # Poll for results (replace TASK_ID)
-pplx-curl.sh --get "https://api.perplexity.ai/async/chat/completions/TASK_ID"
+"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" --get "https://api.perplexity.ai/async/chat/completions/TASK_ID"
 ```
 
 ## Authentication
@@ -305,10 +305,10 @@ Based on my analysis, the key findings are...
 
 ## Complete curl Example
 
-Use the plugin's `scripts/pplx-curl.sh` for all API calls. The script handles auth internally. Do NOT extract the key manually.
+Call `pplx-curl.sh` by its absolute path, `$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh`, for all API calls. The script handles auth internally. Do NOT extract the key manually.
 
 ```bash
-pplx-curl.sh "https://api.perplexity.ai/chat/completions" "$OUTPUT_FILE" '{"model":"sonar-reasoning-pro","messages":[{"role":"system","content":"You are a research assistant. Provide comprehensive, well-cited answers."},{"role":"user","content":"What are the key differences between PostgreSQL and MySQL for web applications?"}],"web_search_options":{"search_context_size":"high"},"search_mode":"web","return_related_questions":true,"return_images":false,"temperature":0.2,"stream":false}'
+"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" "https://api.perplexity.ai/chat/completions" "$OUTPUT_FILE" '{"model":"sonar-reasoning-pro","messages":[{"role":"system","content":"You are a research assistant. Provide comprehensive, well-cited answers."},{"role":"user","content":"What are the key differences between PostgreSQL and MySQL for web applications?"}],"web_search_options":{"search_context_size":"high"},"search_mode":"web","return_related_questions":true,"return_images":false,"temperature":0.2,"stream":false}'
 ```
 
 **Raw curl (for manual debugging only):**
