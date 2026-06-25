@@ -39,20 +39,25 @@ parameters, incorporate changes.
 
 ### Step 3: Generate Research ID
 
-Use pplx-curl.sh:
+**Locating the script.** `pplx-curl.sh` ships in this plugin at
+`scripts/pplx-curl.sh` and is NOT on PATH — do not call it by bare name.
+Invoke it by absolute path as `$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh`, where
+`$CLAUDE_PLUGIN_ROOT` is this plugin's install directory (resolve it to the
+directory this skill loaded from if your shell has not exported it). Resolve
+that absolute path once and reuse it for every call.
 
 ```bash
-pplx-curl.sh --next-id
+"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" --next-id
 ```
 
 This returns the next sequential ID (e.g., `RE-2026-0403-001`).
 
 ### Step 4: Execute API Call
 
-Locate `pplx-curl.sh` in the research-engine plugin's `scripts/` directory.
+Call the script by its absolute path (see Step 3):
 
 ```bash
-path/to/pplx-curl.sh --research "TOPIC_SLUG" '{"model":"MODEL_NAME","messages":[{"role":"system","content":"SYSTEM_PROMPT"},{"role":"user","content":"USER_QUERY"}],"web_search_options":{"search_context_size":"high"},"search_mode":"SEARCH_MODE","return_related_questions":true,"return_images":RETURN_IMAGES,"temperature":0.2,"stream":false}'
+"$CLAUDE_PLUGIN_ROOT/scripts/pplx-curl.sh" --research "TOPIC_SLUG" '{"model":"MODEL_NAME","messages":[{"role":"system","content":"SYSTEM_PROMPT"},{"role":"user","content":"USER_QUERY"}],"web_search_options":{"search_context_size":"high"},"search_mode":"SEARCH_MODE","return_related_questions":true,"return_images":RETURN_IMAGES,"temperature":0.2,"stream":false}'
 ```
 
 The `--research` mode handles:

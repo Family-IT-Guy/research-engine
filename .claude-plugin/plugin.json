@@ -1,7 +1,7 @@
 {
   "name": "research-engine",
-  "description": "Cited web research via Perplexity Sonar API. Orchestrates multi-topic research with background sub-agents, primary source verification, cascade follow-ups, and persistent thread files.",
-  "version": "2.0.1",
+  "description": "Cited web research: Claude-led deep dives over the Perplexity Search API, plus quick Sonar lookups, background sub-agents, primary-source grounding, cascade follow-ups, and persistent thread files.",
+  "version": "2.0.2",
   "author": {
     "name": "Ben Gillenwater"
   },

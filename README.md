@@ -14,11 +14,19 @@ Every finding traces back to a source. Every source is saved. If something looks
 
 1. **Install the plugin**
 
+   Install from the Family IT Guy marketplace:
+
    ```bash
-   claude mcp add-plugin research-engine --local /path/to/research-engine
+   claude plugin marketplace add Family-IT-Guy/plugins
+   claude plugin install research-engine@familyitguy
    ```
 
-   Or clone this repo and point Claude Code at it.
+   Or run from a local clone (for development):
+
+   ```bash
+   git clone https://github.com/Family-IT-Guy/research-engine.git
+   claude --plugin-dir "$PWD/research-engine"
+   ```
 
 2. **Get a Perplexity API key**
 
@@ -124,7 +132,7 @@ See `references/models.md` for full pricing breakdown and selection guidance.
 
 ## Prerequisites
 
-- **jq** — JSON processor, used for cache index operations. Install: `brew install jq` (macOS), `apt install jq` (Linux), `choco install jq` (Windows).
+- **jq** — JSON processor. Parses the Perplexity API responses: extracting the research content, running the citation-count quality gate (rejects answers with no live web sources), and tracking cost. Without jq, research still runs but silently loses content extraction and the citation gate, and the raw `--get` calls fail outright. Install: `brew install jq` (macOS), `apt install jq` (Linux), `choco install jq` (Windows).
 
 ## Requirements
 
