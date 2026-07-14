@@ -391,7 +391,7 @@ Rate limits depend on account tier. Check response headers:
   `.output[] | select(.type=="search_results") | .results[] | {title, url}`;
   cost at `.usage.cost.total_cost` (native dollars)
 - Emergency brake: if a preset update degrades results,
-  `references/agent-api-frozen-deep-research.json` (captured 2026-06-11) can be
+  `agent-api-frozen-deep-research.json` (captured 2026-06-11) can be
   sent as the payload instead of the preset name to pin the old behavior while
   investigating
 

@@ -9,4 +9,4 @@ description: >-
 
 # Research Engine: Query
 
-Read the full workflow from `references/query.md` in this plugin's directory and follow it step by step.
+Read `../../references/query.md` (relative to this skill's directory) and follow it step by step.

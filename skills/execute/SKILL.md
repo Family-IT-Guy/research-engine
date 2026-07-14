@@ -10,4 +10,4 @@ description: >-
 
 # Research Engine: Execute
 
-Read the full workflow from `references/execution.md` in this plugin's directory and follow it step by step.
+Read `../../references/execution.md` (relative to this skill's directory) and follow it step by step.

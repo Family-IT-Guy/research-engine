@@ -18,4 +18,4 @@ description: >-
 
 # Research Engine: Orchestrate
 
-Read the full workflow from `references/orchestration.md` in this plugin's directory and follow it step by step.
+Read `../../references/orchestration.md` (relative to this skill's directory) and follow it step by step.

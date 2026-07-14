@@ -134,9 +134,9 @@ By depth:
   (single call; on empty completion retry once then switch `sonar-pro`)
 
 For RCA/debugging queries: sonar-reasoning-pro is mandatory (causal reasoning
-required). See `references/rca-workflow.md`.
+required). See `rca-workflow.md`.
 
-For multi-model synthesis patterns: see `references/models.md`.
+For multi-model synthesis patterns: see `models.md`.
 
 ## Auto-Select Parameters
 
@@ -173,7 +173,7 @@ evergreen/reference topics):
   - Academic: `[".edu", "scholar.google.com"]`
 - General query -> omit
 
-For all available API parameters: see `references/api-reference.md`.
+For all available API parameters: see `api-reference.md`.
 
 ## Quick Scan Workflow
 
@@ -190,7 +190,7 @@ Using LLM reasoning only (NO Bash, NO tool calls), determine:
    - **Academic/scientific**: "Prioritize peer-reviewed sources and reputable publications. Note methodology limitations. Highlight conflicting findings."
    - **Fact-checking**: "Cross-reference claims against multiple independent sources. Distinguish verified facts from disputed claims. Rate confidence levels."
    - **Business/market**: "Prioritize authoritative sources (SEC filings, official reports). Include quantitative data. Note potential biases."
-   - **RCA/debugging**: Use the RCA system prompt from `references/rca-workflow.md`.
+   - **RCA/debugging**: Use the RCA system prompt from `rca-workflow.md`.
 4. **search_mode**: Per auto-select rules above
 5. **return_images**: Per auto-select rules above
 6. **user_message**: The query string. If this is a **cascade child**, prepend
@@ -470,6 +470,6 @@ no related questions, no reasoning trace).
 
 Detailed documentation lives in the reference files. Do not duplicate here.
 
-- `references/api-reference.md` — Full API endpoint docs, async endpoint, all parameters, curl examples, response format, jq parsing
-- `references/models.md` — Model capabilities, pricing, multi-model synthesis patterns, confidence scoring
-- `references/rca-workflow.md` — Root cause analysis triggers, hypothesis testing, evidence-based language, documentation template
+- `api-reference.md` — Full API endpoint docs, async endpoint, all parameters, curl examples, response format, jq parsing
+- `models.md` — Model capabilities, pricing, multi-model synthesis patterns, confidence scoring
+- `rca-workflow.md` — Root cause analysis triggers, hypothesis testing, evidence-based language, documentation template
