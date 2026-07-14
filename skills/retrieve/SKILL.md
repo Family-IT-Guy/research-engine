@@ -9,4 +9,4 @@ description: >-
 
 # Research Engine: Retrieve
 
-Read the full workflow from `references/retrieve.md` in this plugin's directory and follow it step by step.
+Read `../../references/retrieve.md` (relative to this skill's directory) and follow it step by step.
