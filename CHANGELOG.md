@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.3 — 2026-07-14
+
+### Fixed
+
+- Skill context pointers now resolve. The four skills (orchestrate, execute,
+  query, retrieve) and the internal cross-references inside `references/` pointed
+  to `references/X.md` as if resolved from the plugin root, but a skill loads with
+  its base directory at `skills/<name>/`, so the workflow docs never loaded.
+  Pointers now resolve against the reader's actual base: each SKILL.md uses
+  `../../references/<workflow>.md`; internal sibling pointers inside `references/`
+  use bare filenames. README.md/CHANGELOG.md unchanged (already root-relative).
+
+
+
 ## 2.0.1 — 2026-06-13
 
 ### Fixed
