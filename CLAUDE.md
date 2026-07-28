@@ -47,11 +47,11 @@ the first time you have something to put in it: create the file, name it per
 | The question a session asks | Answered here by |
 |---|---|
 | What is this project, and what constrains it? | this file |
-| Where is the work right now? | `status.yml` |
+| Where does the work stand? | `status.yml` |
 | What is blocking? | `status.yml` `open[]` — this project has no `register.json` |
 | What do we already know about X? | **unbound** |
 | What was tried, and what happened? | **unbound** |
-| What was raised and never finished? | **unbound** |
+| What was raised and left open? | **unbound** |
 | What is parked, and what unparks it? | **unbound** |
 | What is the plan, and what phase is it in? | **unbound** |
 | Why is it built this way? | **unbound** — the decision itself goes to `decisions-append.py` |
