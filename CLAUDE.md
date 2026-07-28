@@ -14,22 +14,22 @@ Its own git repository. Default branch `main`, origin `https://github.com/Family
 ## Layout
 
 ```
-agents/  (1 files)
-quick/  (0 files)
-  cascades/  (0 files)
-  raw/  (0 files)
-  sources/  (0 files)
-references/  (9 files)
-research/  (2 files)
-  cascades/  (0 files)
-  raw/  (19 files)
-  sources/  (34 files)
-scripts/  (1 files)
-skills/  (0 files)
-  execute/  (1 files)
-  orchestrate/  (1 files)
-  query/  (1 files)
-  retrieve/  (1 files)
+agents/
+quick/
+  cascades/
+  raw/
+  sources/
+references/
+research/
+  cascades/
+  raw/
+  sources/
+scripts/
+skills/
+  execute/
+  orchestrate/
+  query/
+  retrieve/
 ```
 
 ## Where current state lives
