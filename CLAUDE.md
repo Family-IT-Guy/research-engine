@@ -25,12 +25,8 @@ Its own git repository. Default branch `main`, origin `https://github.com/Family
 | Where does the work stand? | `status.yml` |
 | What is blocking? | `status.yml` `open[]` — this project has no `register.json` |
 
-Only bound slots are listed. The full question list is in
-`~/.claude/rules/state-capture-protocol.md`, which loads every session; a question not in the
-table above is unbound here, and binding one adds its row here.
+Only bound slots are listed. The full question list is in `~/.claude/rules/where-state-lives.md`, which loads every session; a question not in the table above is unbound here, and binding one adds its row here.
 
 ## Where current state lives
 
-`status.yml` in this folder holds the changing half: where the work stands, what is open,
-what was last worked on. This file carries only the durable half. A sentence that would be
-false next month belongs in `status.yml` instead of here.
+`status.yml` in this folder holds the changing half: where the work stands, what is open, what was last worked on. This file carries only the durable half. A sentence that would be false next month belongs in `status.yml` instead of here.
