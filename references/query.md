@@ -66,6 +66,12 @@ The `--research` mode handles:
 - Saving the API response to `research/raw/TIMESTAMP_TOPIC-SLUG.json`
 - Printing the output file path as `OUTPUT_PATH=<path>`
 
+### Step 4b: Open the Sources Behind Material Claims
+
+Follow execution.md Step 3b: open the original source behind each claim the
+answer depends on, and report any claim you could not trace as search
+synthesis rather than an established finding.
+
 ### Step 5: Write Thread File
 
 Use the **Write** tool to create `research/[topic-slug]-YYYY-MM-DD.md`

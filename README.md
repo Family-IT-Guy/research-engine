@@ -1,6 +1,6 @@
 # Research Engine
 
-Cited web research for Claude Code. Ask a question, get structured findings with sources, costs tracked, everything saved to files.
+Cited web research for Claude Code, and for hosts that connect Perplexity directly (ChatGPT, Codex). Ask a question, get structured findings with sources you can check. In Claude Code, costs are tracked and everything is saved to files.
 
 **License:** MIT
 
@@ -78,7 +78,7 @@ Searches your local research files and tells you what's covered, what's stale, a
 
 ## How it works
 
-Four skills:
+Five skills:
 
 | Skill | What it does |
 |-------|-------------|
@@ -86,10 +86,11 @@ Four skills:
 | **execute** | Internal. Runs inside background agents. Calls the API, reads sources, writes thread files. |
 | **query** | Single inline question. Runs in the main conversation. |
 | **retrieve** | Searches existing research. Assesses coverage. |
+| **setup** | Connects Perplexity (OAuth where the host offers it, otherwise your own API key in the host's settings) and proves search and source reading separately. |
 
 ### Research depth
 
-- **Quick scan**: single API call, Perplexity synthesis only. For factual lookups. ~$0.01-0.05.
+- **Quick scan**: single API call, then the sources behind material claims are opened. For factual lookups. ~$0.01-0.05 in API fees.
 - **Deep dive**: Claude-led research over the Perplexity Search API — query fan-out, primary-source reading, claim-grounded synthesis + cascade generation. For anything that matters. Pennies in search fees; Claude time is subscription-covered. Hosted Agent API draft available as a fast alternate.
 
 ### The researcher

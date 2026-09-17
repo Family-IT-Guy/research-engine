@@ -1,5 +1,47 @@
 # Changelog
 
+## 2.1.0 — 2026-09-16
+
+### Added
+
+- **One research method for every runtime.** `references/methodology.md` holds the
+  method both the local Claude runtime and a connected host follow: identify the
+  question, plan searches that could disconfirm the leading explanation, search,
+  open the ORIGINAL sources, assess each material claim, synthesize with
+  resolvable citations, and retain the work only after a read-back succeeds.
+- **`references/connected-runtime.md`** — running the same method on a host that
+  offers connected Perplexity tools and a source reader, with no shell, no local
+  files and no sub-agents. Covers handing findings to a connected record system
+  and reading them back in a later conversation.
+- **`skills/setup`** — connecting Perplexity through the host's own OAuth flow
+  where it exists, or the user's own API key entered in the host's credential
+  settings. Never in chat, a document, a manifest or a transcript. Search and
+  source reading are proven separately, because search succeeding does not show
+  that reading a source works.
+- **`scripts/build-chatgpt-skill.py`** — builds a single-skill archive for a
+  connected host FROM the canonical references, so there is no second copy of the
+  method to drift. Local scripts and Claude-runtime instructions are excluded.
+- **`.codex-plugin/plugin.json`** — Codex/connected-host manifest.
+
+### Changed
+
+- **Evidence is assessed per claim, not ranked by study category.** The five-row
+  evidence-tier table is gone. A claim is assessed on methodology rigor,
+  independent replication, mechanism support, conflicts of interest, and
+  generalizability to the question, and the thin axis is named. Study type is
+  recorded as description. A small unblinded RCT can be weaker than a large,
+  well-controlled cohort, and the tier table said otherwise.
+- Confidence lines in the report template now carry their reason, so a label can
+  be checked instead of taken.
+- Both manifests carry 2.1.0. Their descriptions differ on purpose: the Claude
+  manifest describes the local runtime, the Codex manifest the connected one.
+- Quick scans and single queries now open the source behind each material claim
+  before presenting it as established; untraced claims are labelled search
+  synthesis. Two models agreeing is no longer treated as a confidence grade.
+- The orchestrate skill picks its adapter in a fixed order: the full Claude Code
+  runtime, then connected Perplexity tools, then setup. A shell alone no longer
+  selects the local adapter.
+
 ## 2.0.3 — 2026-07-14
 
 ### Fixed

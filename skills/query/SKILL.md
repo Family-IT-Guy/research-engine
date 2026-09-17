@@ -9,4 +9,6 @@ description: >-
 
 # Research Engine: Query
 
+Read `../../references/methodology.md` first. If connected Perplexity tools are available, or this host lacks the local shell wrapper, follow `../../references/connected-runtime.md` instead of the local instructions below.
+
 Read `../../references/query.md` (relative to this skill's directory) and follow it step by step.

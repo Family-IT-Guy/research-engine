@@ -326,15 +326,15 @@ If `~/.claude/research-engine.md` exists and defines a `youtube_tool` in Setting
 ## Depth Tiers
 
 ### Quick Scan
-- Single sonar-reasoning-pro call
-- Perplexity synthesis only, no primary source fetching
+- Single sonar-reasoning-pro call, then open the original source behind each material claim (methodology.md step 4)
+- A claim whose source was not opened is reported as search synthesis, never as established
 - Cost: ~$0.01-0.05
 - Use for: factual lookups, simple comparisons, current event checks
 
 ### Deep Dive
 - Claude-led: the sub-agent plans a search fan-out (Perplexity Search API,
   raw results), reads primary sources, grounds every claim in a fetched
-  source, synthesizes with evidence tiers
+  source, synthesizes with the individual-claim assessment in methodology.md
 - Assesses completeness, writes cascade requests for gaps
 - Cost: ~$0.02-0.10 in search fees (Claude time subscription-covered);
   hosted Agent API draft available as fast alternate

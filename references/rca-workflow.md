@@ -130,6 +130,6 @@ When session context exists, add:
 ## Source Quality Assessment
 
 For each citation, note:
-- **Credibility**: Official docs > technical blogs > forums > social media
+- **Credibility**: assess the specific claim, not the kind of site it came from — official docs can be stale, and a forum post with a working reproduction can be the better evidence (methodology.md step 5)
 - **Recency**: Publication date; flag if >1 year old for fast-moving topics
 - **Relevance**: Direct evidence vs tangential mention

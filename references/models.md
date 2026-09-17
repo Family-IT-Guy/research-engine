@@ -121,13 +121,17 @@ With our two-model setup (sonar-reasoning-pro + sonar-deep-research), multi-mode
 
 ### Synthesis Guidelines
 
-#### Confidence Scoring
+#### Model Agreement
 
-| Agreement | Confidence | Presentation |
-|-----------|------------|--------------|
-| Both models agree | High | State as established finding |
-| Minor variations | Medium-High | State with "generally" qualifier |
-| Models conflict | Low | Flag conflict explicitly, analyze why |
+Two models agreeing is not evidence: both can repeat the same unread source.
+Agreement or conflict tells you where to look, not how much to trust the
+answer. Assess each material claim on the axes in methodology.md step 5.
+
+| Agreement | What it means | What to do |
+|-----------|---------------|------------|
+| Both models agree | The claim is common in what they found | Open its source before calling it established |
+| Minor variations | Wording or scope differs | Find which source each wording came from |
+| Models conflict | The sources disagree, or one model misread | Flag the conflict explicitly and open both sources |
 
 #### Handling Conflicts
 

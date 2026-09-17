@@ -1,0 +1,23 @@
+{
+  "name": "research-engine",
+  "version": "2.1.0",
+  "description": "Cited research with Perplexity search, primary-source reading, and explicit evidence assessment.",
+  "author": {
+    "name": "Ben Gillenwater"
+  },
+  "license": "MIT",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Research Engine",
+    "shortDescription": "Research with sources you can check",
+    "longDescription": "Investigate questions using Perplexity and primary sources, preserve uncertainty, and retain findings in an available connected record system.",
+    "developerName": "Family IT Guy",
+    "category": "Productivity",
+    "defaultPrompt": [
+      "Research this question and check the original sources."
+    ],
+    "capabilities": [
+      "Interactive"
+    ]
+  }
+}
